@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRISTAR | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { 
+            background-color: #f0f9ff; 
+            font-family: 'Poppins', sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            color: #333; 
+            padding-bottom: 70px;
+        }
+        .modal-overlay { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.6); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 1000; 
+        }
+        .modal-content { 
+            background: white; 
+            width: 90%; 
+            max-width: 350px; 
+            border-radius: 20px; 
+            padding: 20px; 
+            position: relative; 
+            text-align: center; 
+            border: 3px solid #0ea5e9; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .close-btn { 
+            position: absolute; 
+            top: 15px; 
+            right: 20px; 
+            font-size: 24px; 
+            color: #666; 
+            cursor: pointer; 
+        }
+        .btn-social { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 10px; 
+            width: 100%; 
+            padding: 12px; 
+            border-radius: 30px; 
+            border: 1.5px solid #e2e8f0; 
+            margin-top: 10px; 
+            font-weight: bold; 
+            font-size: 14px; 
+            text-decoration: none; 
+            color: #333; 
+        }
+        .header-logo { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 12px 15px; 
+            background: white; 
+            border-bottom: 2px solid #7dd3fc; 
+        }
+        .promo-banner { 
+            width: 100%; 
+            height: 220px; 
+            background-size: cover; 
+            background-position: center; 
+            position: relative; 
+            transition: background-image 1s ease-in-out;
+        }
+        .function-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 10px; 
+            padding: 20px 10px; 
+            text-align: center; 
+        }
+        .icon-circle { 
+            width: 55px; 
+            height: 55px; 
+            border-radius: 50%; 
+            border: 2px solid #0ea5e9; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin: 0 auto 8px auto; 
+            background: white; 
+            cursor: pointer; 
+            box-shadow: 0 4px 6px rgba(14, 165, 233, 0.1);
+        }
+        .icon-circle i { 
+            font-size: 20px; 
+            color: #16a34a; 
+        }
+        .icon-fc { 
+            font-weight: 900; 
+            color: #16a34a; 
+            font-size: 18px; 
+        }
+        .function-label { 
+            font-size: 12px; 
+            color: #475569; 
+            font-weight: 600; 
+        }
+        .assets-box { 
+            background: white; 
+            margin: 0 15px; 
+            padding: 18px; 
+            border-radius: 16px; 
+            border: 2px solid #7dd3fc; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        .asset-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .asset-label { 
+            font-size: 12px; 
+            color: #64748b; 
+            margin-bottom: 4px; 
+            font-weight: 600;
+        }
+        .asset-amount { 
+            font-size: 20px; 
+            font-weight: 900; 
+            color: #0284c7; 
+        }
+        .gain-amount { 
+            font-size: 20px; 
+            font-weight: 900; 
+            color: #16a34a; 
+        }
+        .bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            width: 100%; 
+            background: white; 
+            display: flex; 
+            justify-content: space-around; 
+            padding: 10px 0; 
+            border-top: 1px solid #e2e8f0; 
+            z-index: 100; 
+        }
+        .nav-item { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            font-size: 11px; 
+            color: #94a3b8; 
+            text-decoration: none; 
+            font-weight: 600;
+        }
+        .nav-item.active { 
+            color: #0284c7; 
+            font-weight: 800; 
+        }
+        .nav-icon-circle { 
+            width: 26px; 
+            height: 26px; 
+            border: 2px solid #94a3b8; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin-bottom: 2px; 
+            font-size: 12px; 
+        }
+        .active .nav-icon-circle { 
+            border-color: #0ea5e9; 
+            background-color: #22c55e; 
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Modal d'Annonce -->
+    <div id="announcementModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 class="text-2xl font-black italic mb-4 text-[#0284c7]">TRISTAR <i class="fa-solid fa-star text-xl text-[#22c55e]"></i></h2>
+            <div class="w-full h-32 mb-4 rounded-lg overflow-hidden border border-sky-200">
+                <img id="modalImg" src="IMG_6992.jpeg" alt="TRISTAR Promo" class="w-full h-full object-cover transition-all duration-500">
+            </div>
+            <p class="text-sm font-bold mb-3 text-slate-800">🚀 Invitez vos amis et gagnez des commissions facilement !</p>
+            <p class="text-xs text-slate-600 mb-4 leading-relaxed">Chaque fois qu’un ami que vous avez invité effectue son premier achat, vous recevez une commission. Taux : 30 % - 2 % - 1 %</p>
+            <a href="https://t.me/+DoNmk-4JT6BhMDM0" target="_blank" class="btn-social"><i class="fab fa-telegram" style="color:#0088cc"></i> Rejoindre le canal Telegram</a>
+            <a href="https://chat.whatsapp.com/B8sRavVow6k9M6XFV2d2FD?mode=gi_t" target="_blank" class="btn-social"><i class="fab fa-whatsapp" style="color:#25D366"></i> Rejoindre le groupe WhatsApp</a>
+            <button onclick="closeModal()" class="btn-social mt-4 bg-[#22c55e] text-white border-none uppercase tracking-wider font-bold">OK</button>
+        </div>
+    </div>
+
+    <!-- En-tête -->
+    <div class="header-logo">
+        <h1 class="text-xl font-black italic text-[#0284c7]">TRISTAR <i class="fa-solid fa-star text-lg text-[#22c55e]"></i></h1>
+        <div class="flex items-center gap-2">
+            <i class="fas fa-bullhorn text-[#16a34a] text-lg"></i>
+            <span class="text-xs text-slate-500 font-semibold">Gagnez des revenus...</span>
+        </div>
+    </div>
+
+    <!-- Bannière d'images défilantes -->
+    <div class="promo-banner" id="banner" style="background-image: url('IMG_6992.jpeg');"></div>
+
+    <p class="text-center text-xs font-bold text-slate-400 mt-6 uppercase tracking-wider">- - - Fonctions courantes - - -</p>
+    <div class="function-grid">
+        <a href="deposer.html"><div class="icon-circle"><i class="fas fa-mobile-alt"></i></div><span class="function-label">Déposer</span></a>
+        <a href="retrait.html"><div class="icon-circle"><span class="icon-fc">FC</span></div><span class="function-label">Retirer</span></a>
+        <a href="compte.html"><div class="icon-circle"><i class="fas fa-credit-card"></i></div><span class="function-label">Compte</span></a>
+        <div onclick="showAbout()" class="icon-circle"><i class="far fa-compass"></i></div><span class="function-label">À propos</span>
+    </div>
+
+    <p class="text-center text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">- - - Actifs du compte - - -</p>
+    <div class="assets-box">
+        <div class="asset-row">
+            <div>
+                <p class="asset-label">Solde du compte</p>
+                <p id="user-balance" class="asset-amount">0.00 FC</p>
+            </div>
+            <div class="text-right">
+                <p class="asset-label">Gains du jour</p>
+                <p id="daily-gain" class="gain-amount">0.00 FC</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message défilant -->
+    <div class="mx-4 mt-6 bg-white p-3 rounded-xl border border-sky-100 flex items-center gap-3 shadow-sm">
+        <div class="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-[#16a34a] font-black text-xs">FC</div>
+        <marquee class="text-sm text-slate-600 font-medium">Retrait effectué avec succès par 081***... Félicitations !</marquee>
+    </div>
+
+    <!-- Navigation du bas -->
+    <div class="bottom-nav">
+        <a href="dashboard.html" class="nav-item active"><div class="nav-icon-circle"><i class="fas fa-redo-alt"></i></div><span>Commencer</span></a>
+        <a href="investir.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-tasks"></i></div><span>Investir</span></a>
+        <a href="gains.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-chart-line"></i></div><span>Gains</span></a>
+        <a href="agent.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-paper-plane"></i></div><span>Agent</span></a>
+        <a href="profil.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-ellipsis-h"></i></div><span>Profil</span></a>
+    </div>
+
+    <script>
+        // Configuration Firebase
+        const firebaseConfig = { databaseURL: "https://firstsolar-e2ba3-default-rtdb.firebaseio.com/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const userId = localStorage.getItem('userId');
+
+        function closeModal() { document.getElementById('announcementModal').style.display = 'none'; }
+        function showAbout() { alert("TRISTAR : Votre partenaire d'investissement en fer à repasser et électroménager en RDC."); }
+
+        // Script pour alterner les images (IMG_6992.jpeg et IMG_6993.jpeg)
+        const images = ['IMG_6992.jpeg', 'IMG_6993.jpeg'];
+        let currentImgIndex = 0;
+
+        function switchImages() {
+            currentImgIndex = (currentImgIndex + 1) % images.length;
+            const nextImg = images[currentImgIndex];
+            
+            // Changement de l'image du Modal
+            const modalImg = document.getElementById('modalImg');
+            if(modalImg) modalImg.src = nextImg;
+            
+            // Changement de l'image de la Bannière
+            const banner = document.getElementById('banner');
+            if(banner) banner.style.backgroundImage = `url('${nextImg}')`;
+        }
+
+        // Alternance automatique toutes les 4 secondes (4000 ms)
+        setInterval(switchImages, 4000);
+
+        // Récupération des données utilisateur dans Firebase
+        if (userId) {
+            const userRef = db.ref('users/' + userId);
+            userRef.on('value', async (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    document.getElementById('user-balance').innerText = `${parseFloat(data.balance || 0).toFixed(2)} FC`;
+                    if (data.myProducts) {
+                        let totalDaily = 0;
+                        const now = new Date().getTime();
+                        let updates = {};
+                        let gainAdded = false;
+
+                        Object.keys(data.myProducts).forEach(key => {
+                            const prod = data.myProducts[key];
+                            totalDaily += parseFloat(prod.daily);
+                            const lastCollect = prod.lastCollectTime || new Date(prod.purchaseDate).getTime();
+                            if (now - lastCollect >= 86400000) { 
+                                data.balance += parseFloat(prod.daily);
+                                updates[`myProducts/${key}/lastCollectTime`] = now;
+                                gainAdded = true;
+                            }
+                        });
+                        document.getElementById('daily-gain').innerText = `${totalDaily.toFixed(2)} FC`;
+                        if (gainAdded) {
+                            updates['balance'] = data.balance;
+                            await userRef.update(updates);
+                        }
+                    }
+                }
+            });
+        } else {
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+</html>

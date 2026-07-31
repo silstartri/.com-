@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRISTAR | Connexion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #e0f2fe; /* Bleu ciel très clair pour le fond */
+            color: #333;
+        }
+
+        .logo-wrapper { text-align: center; margin-bottom: 30px; }
+        .logo-container {
+            display: inline-block;
+            background: #ffffff; /* Blanc */
+            padding: 10px 20px;
+            border: 3px solid #0ea5e9; /* Bleu ciel */
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .t-top {
+            background: #ffffff;
+            border: 3px solid #0ea5e9;
+            border-bottom: none;
+            width: 40px;
+            height: 40px;
+            position: absolute;
+            top: -38px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #16a34a; /* Vert */
+            font-size: 24px;
+            font-weight: 900;
+            border-radius: 5px 5px 0 0;
+        }
+        .main-text {
+            color: #0284c7; /* Bleu ciel foncé */
+            font-size: 28px;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 900;
+        }
+        .slogan {
+            color: #16a34a; /* Vert */
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-top: 8px;
+            letter-spacing: 1.5px;
+        }
+
+        .input-group {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            border: 2px solid #7dd3fc; /* Bleu ciel doux */
+            transition: 0.3s;
+        }
+        .input-group:focus-within {
+            border-color: #0ea5e9;
+        }
+        .input-group input {
+            background: transparent;
+            border: none;
+            width: 100%;
+            color: #333;
+            outline: none;
+            font-size: 15px;
+        }
+        .input-group span {
+            color: #16a34a; /* Vert */
+            font-weight: bold;
+            margin-right: 10px;
+            border-right: 1px solid #e5e7eb;
+            padding-right: 10px;
+        }
+        .btn-login {
+            background-color: #0ea5e9; /* Bleu ciel principal pour contraster avec le vert de l'inscription */
+            color: #ffffff;
+            width: 100%;
+            padding: 15px;
+            border-radius: 50px;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+            transition: 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-login:active { transform: scale(0.98); }
+        .btn-login:disabled { background-color: #7dd3fc; cursor: not-allowed; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6">
+
+    <div class="w-full max-w-sm">
+        <div class="logo-wrapper">
+            <div class="logo-container">
+                <div class="t-top">T</div>
+                <div class="main-text">
+                    TRISTAR <i class="fa-solid fa-star text-xl text-[#22c55e]"></i>
+                </div>
+            </div>
+            <div class="slogan">L'Élite des Investisseurs</div>
+        </div>
+
+        <p class="text-center mb-8 font-bold text-lg tracking-wider text-[#0284c7]">CONNEXION</p>
+
+        <form id="loginForm">
+            <div class="input-group">
+                <span>+243</span>
+                <input type="tel" id="phone" placeholder="Numéro de téléphone" required>
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="pin" placeholder="Mot de passe (6 chiffres)" inputmode="numeric" maxlength="6" required>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn-login">SE CONNECTER</button>
+        </form>
+
+        <div class="mt-8 text-center">
+            <p class="text-slate-600">Pas encore membre ? <a href="register.html" class="font-bold text-[#16a34a] underline">Inscrivez-vous ici</a></p>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURATION FIREBASE
+        const firebaseConfig = {
+            databaseURL: "https://firstsolar-e2ba3-default-rtdb.firebaseio.com/"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const phone = document.getElementById('phone').value;
+            const pin = document.getElementById('pin').value;
+            const btn = document.getElementById('submitBtn');
+
+            if (pin.length !== 6) {
+                alert("Le mot de passe doit contenir exactement 6 chiffres.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "CONNEXION EN COURS...";
+
+            // Recherche de l'utilisateur par numéro de téléphone
+            db.ref('users').orderByChild('phone').equalTo(phone).once('value', snapshot => {
+                if (snapshot.exists()) {
+                    // L'utilisateur existe, on vérifie le mot de passe
+                    let userData = null;
+                    let userId = null;
+                    
+                    snapshot.forEach(childSnapshot => {
+                        userId = childSnapshot.key;
+                        userData = childSnapshot.val();
+                    });
+
+                    if (userData.password === pin) {
+                        // Succès de la connexion
+                        localStorage.setItem('userId', userId);
+                        localStorage.setItem('userPhone', userData.phone);
+                        
+                        alert("Connexion réussie !");
+                        // Redirection vers la page d'accueil / tableau de bord
+                        window.location.href = "dashboard.html"; // Remplacez par le nom de votre page principale
+                    } else {
+                        // Mot de passe incorrect
+                        alert("Mot de passe incorrect.");
+                        btn.disabled = false;
+                        btn.innerText = "SE CONNECTER";
+                    }
+                } else {
+                    // Numéro introuvable
+                    alert("Ce numéro n'est pas enregistré. Veuillez vous inscrire.");
+                    btn.disabled = false;
+                    btn.innerText = "SE CONNECTER";
+                }
+            }).catch(error => {
+                alert("Erreur de connexion: " + error.message);
+                btn.disabled = false;
+                btn.innerText = "SE CONNECTER";
+            });
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRISTAR | Historique complet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { 
+            background-color: #f0f9ff; 
+            font-family: 'Poppins', sans-serif; 
+            margin: 0; 
+            padding-bottom: 40px; 
+            color: #333;
+        }
+        .header-nav { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 16px 20px; 
+            background: white; 
+            position: relative; 
+            border-bottom: 3px solid #7dd3fc; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+        .back-btn { 
+            position: absolute; 
+            left: 16px; 
+            width: 34px;
+            height: 34px;
+            background: #f1f5f9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #475569; 
+            text-decoration: none; 
+        }
+        .header-title { 
+            font-weight: 900; 
+            font-size: 17px; 
+            color: #0284c7; 
+            text-transform: uppercase; 
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .tabs-container { 
+            background: white; 
+            margin: 20px 15px; 
+            border-radius: 30px; 
+            display: flex; 
+            padding: 4px; 
+            border: 2px solid #7dd3fc; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .tab-item { 
+            flex: 1; 
+            text-align: center; 
+            padding: 10px 0; 
+            font-weight: 700; 
+            font-size: 13px; 
+            color: #64748b; 
+            cursor: pointer; 
+            border-radius: 25px; 
+            transition: 0.3s; 
+        }
+        .tab-item.active { 
+            background-color: #0284c7; 
+            color: white; 
+            box-shadow: 0 3px 8px rgba(2, 132, 199, 0.3); 
+        }
+        .history-card { 
+            background: white; 
+            margin: 12px 15px; 
+            border-radius: 16px; 
+            padding: 16px; 
+            border: 1.5px solid #bae6fd; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02); 
+        }
+        .history-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 8px; 
+        }
+        .history-label { 
+            font-size: 13px; 
+            font-weight: 800; 
+            color: #0f172a; 
+        }
+        .history-value { 
+            font-size: 15px; 
+            font-weight: 900; 
+        }
+        .divider { 
+            border-top: 1px dashed #cbd5e1; 
+            margin: 10px 0; 
+        }
+        .time-label { 
+            font-size: 11px; 
+            color: #64748b; 
+            font-weight: 500;
+        }
+        .status-badge { 
+            font-size: 10px; 
+            padding: 3px 10px; 
+            border-radius: 12px; 
+            text-transform: uppercase; 
+            font-weight: 800; 
+        }
+        .status-pending { background: #fef3c7; color: #b45309; }
+        .status-success { background: #dcfce7; color: #15803d; }
+        .status-failed { background: #fee2e2; color: #b91c1c; }
+    </style>
+</head>
+<body>
+
+    <div class="header-nav">
+        <a href="profil.html" class="back-btn"><i class="fas fa-chevron-left text-xs"></i></a>
+        <h1 class="header-title">
+            TRISTAR HISTORIQUE <i class="fa-solid fa-star text-base text-[#22c55e]"></i>
+        </h1>
+    </div>
+
+    <div class="tabs-container">
+        <div class="tab-item active" onclick="loadHistory('Solde')">Solde</div>
+        <div class="tab-item" onclick="loadHistory('Dépôt')">Dépôt</div>
+        <div class="tab-item" onclick="loadHistory('Retrait')">Retrait</div>
+    </div>
+
+    <div id="history-content">
+        <p class="text-center text-slate-400 mt-10 text-xs font-semibold">Chargement de l'historique...</p>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://firstsolar-e2ba3-default-rtdb.firebaseio.com/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const userId = localStorage.getItem('userId');
+
+        function formatDate(dateString) {
+            if(!dateString) return "Date inconnue";
+            const date = new Date(dateString);
+            return date.toLocaleString('fr-FR');
+        }
+
+        async function loadHistory(filter) {
+            const tabs = document.querySelectorAll('.tab-item');
+            tabs.forEach(t => {
+                t.classList.remove('active');
+                if(t.innerText === filter) t.classList.add('active');
+            });
+
+            const content = document.getElementById('history-content');
+            content.innerHTML = '<p class="text-center text-slate-400 mt-10 text-xs font-semibold">Chargement...</p>';
+
+            if (!userId) return;
+
+            let html = '';
+            
+            try {
+                if (filter === "Solde") {
+                    const snap = await db.ref('users/' + userId).once('value');
+                    const userData = snap.val();
+                    
+                    html += `
+                        <div class="history-card">
+                            <div class="history-row">
+                                <span class="history-label">Bonus d'inscription</span>
+                                <span class="history-value text-[#22c55e]">+1 000,00 FC</span>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="history-row">
+                                <span class="time-label">Statut :</span>
+                                <span class="status-badge status-success">Complété</span>
+                            </div>
+                        </div>`;
+                } 
+                
+                else if (filter === "Retrait") {
+                    const snap = await db.ref('admin/withdrawals').orderByChild('userId').equalTo(userId).once('value');
+                    if (snap.exists()) {
+                        snap.forEach(child => {
+                            const data = child.val();
+                            const amount = parseFloat(data.amount || 0);
+                            html += `
+                            <div class="history-card">
+                                <div class="history-row">
+                                    <span class="history-label">Demande de Retrait</span>
+                                    <span class="history-value text-red-500">-${amount.toLocaleString('fr-FR', {minimumFractionDigits: 2})} FC</span>
+                                </div>
+                                <div class="divider"></div>
+                                <div class="history-row">
+                                    <span class="time-label">${formatDate(data.date)}</span>
+                                    <span class="status-badge ${data.status === 'En attente' ? 'status-pending' : (data.status === 'Rejeté' ? 'status-failed' : 'status-success')}">${data.status || 'Complété'}</span>
+                                </div>
+                            </div>`;
+                        });
+                    }
+                }
+
+                else if (filter === "Dépôt") {
+                    const snap = await db.ref('admin/recharges').orderByChild('userId').equalTo(userId).once('value');
+                    if (snap.exists()) {
+                        snap.forEach(child => {
+                            const data = child.val();
+                            const amount = parseFloat(data.amount || 0);
+                            html += `
+                            <div class="history-card">
+                                <div class="history-row">
+                                    <span class="history-label">Recharge de compte</span>
+                                    <span class="history-value text-[#0284c7]">+${amount.toLocaleString('fr-FR', {minimumFractionDigits: 2})} FC</span>
+                                </div>
+                                <div class="divider"></div>
+                                <div class="history-row">
+                                    <span class="time-label">${formatDate(data.date)}</span>
+                                    <span class="status-badge ${data.status === 'En attente' ? 'status-pending' : (data.status === 'Rejeté' ? 'status-failed' : 'status-success')}">${data.status || 'Complété'}</span>
+                                </div>
+                            </div>`;
+                        });
+                    }
+                }
+
+                content.innerHTML = html || '<p class="text-center text-slate-400 mt-10 text-xs font-semibold">Aucun historique trouvé.</p>';
+
+            } catch (error) {
+                content.innerHTML = '<p class="text-center text-red-400 mt-10 text-xs font-semibold">Erreur de chargement.</p>';
+            }
+        }
+
+        window.onload = () => loadHistory('Solde');
+    </script>
+</body>
+</html>

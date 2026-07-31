@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRISTAR | Déposer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { 
+            background-color: #f0f9ff; 
+            font-family: 'Poppins', sans-serif; 
+            padding-bottom: 30px; 
+            margin: 0;
+            color: #333;
+        }
+        .header-bar { 
+            background: white; 
+            padding: 16px 20px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            border-bottom: 3px solid #7dd3fc; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+        .back-btn {
+            width: 34px;
+            height: 34px;
+            background: #f1f5f9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #475569;
+            text-decoration: none;
+        }
+        .balance-box { 
+            background: linear-gradient(135deg, #0f172a, #1e293b); 
+            color: white; 
+            margin: 15px; 
+            padding: 20px; 
+            border-radius: 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border: 2px solid #7dd3fc;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .amount-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 10px; 
+            padding: 0 15px; 
+        }
+        .amount-btn { 
+            background: white; 
+            border: 1.5px solid #cbd5e1; 
+            padding: 12px 5px; 
+            border-radius: 14px; 
+            font-weight: 700; 
+            font-size: 13px; 
+            text-align: center; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            color: #0f172a;
+        }
+        .amount-btn.active { 
+            border-color: #0284c7; 
+            color: #0284c7; 
+            background: #e0f2fe; 
+            transform: scale(0.96); 
+        }
+        .phase { display: none; }
+        .phase.active { display: block; }
+        .method-card { 
+            background: white; 
+            margin: 10px 15px; 
+            padding: 16px; 
+            border-radius: 16px; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            border: 2px solid #7dd3fc; 
+            cursor: pointer; 
+            transition: 0.2s;
+        }
+        .method-card:active { transform: scale(0.98); }
+        .method-logo { width: 36px; height: 36px; object-fit: contain; }
+        .btn-main { 
+            background: #22c55e; 
+            color: white; 
+            width: calc(100% - 30px); 
+            margin: 20px 15px; 
+            display: block; 
+            padding: 16px; 
+            border-radius: 30px; 
+            font-weight: 900; 
+            text-align: center; 
+            border: none; 
+            cursor: pointer; 
+            transition: 0.3s;
+            text-transform: uppercase;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+        .btn-main:active { transform: scale(0.97); }
+        .btn-main:disabled { background: #cbd5e1; color: #64748b; box-shadow: none; cursor: not-allowed; }
+        .input-field { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border-radius: 12px; 
+            border: 1.5px solid #cbd5e1; 
+            font-size: 14px; 
+            font-weight: 700;
+            color: #0f172a;
+            outline: none;
+            transition: 0.2s;
+            margin-bottom: 12px;
+        }
+        .input-field:focus { border-color: #0284c7; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15); }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header-bar">
+        <a href="profil.html" class="back-btn"><i class="fas fa-chevron-left text-xs"></i></a>
+        <span class="font-black text-[#0284c7] italic text-base flex items-center gap-2">
+            TRISTAR DÉPÔT <i class="fa-solid fa-star text-sm text-[#22c55e]"></i>
+        </span>
+        <a href="historique_solde.html" class="text-[#0284c7] text-xs font-bold uppercase tracking-wider">Historique</a>
+    </div>
+
+    <!-- Solde Actuel -->
+    <div class="balance-box">
+        <div>
+            <p class="text-xs opacity-80 font-bold uppercase tracking-wider text-slate-300">Solde du compte :</p>
+            <p id="current-balance" class="text-2xl font-black text-[#22c55e] mt-1">0,00 FC</p>
+        </div>
+        <i class="fas fa-wallet text-3xl opacity-20 text-white"></i>
+    </div>
+
+    <!-- PHASE 1 : CHOISIR LE MONTANT -->
+    <div id="phase1" class="phase active">
+        <div class="px-4 mb-3 flex items-center gap-2">
+            <i class="fas fa-check-circle text-[#0284c7]"></i>
+            <span class="font-extrabold text-xs text-slate-700 uppercase tracking-wide">1. Choisir le montant</span>
+        </div>
+        
+        <div class="amount-grid" id="vip-amounts">
+            <div class="amount-btn" onclick="selectAmount(10000, this)">10 000 FC</div>
+            <div class="amount-btn" onclick="selectAmount(35000, this)">35 000 FC</div>
+            <div class="amount-btn" onclick="selectAmount(90000, this)">90 000 FC</div>
+            <div class="amount-btn" onclick="selectAmount(280000, this)">280 000 FC</div>
+            <div class="amount-btn" onclick="selectAmount(850000, this)">850 000 FC</div>
+            <div class="amount-btn" onclick="selectAmount(2500000, this)">2 500 000 FC</div>
+        </div>
+
+        <div class="p-4">
+            <label class="text-xs font-bold text-slate-600 mb-2 block uppercase tracking-wide">Dépôt personnalisé</label>
+            <input type="number" id="custom-amount" class="input-field" placeholder="Entrez le montant en FC">
+            <p class="text-[#0284c7] text-[11px] font-bold mt-1 ml-1">Montant minimum : 10 000 FC</p>
+        </div>
+
+        <button onclick="goToPhase2()" class="btn-main">Continuer vers le paiement</button>
+    </div>
+
+    <!-- PHASE 2 : CHOISIR LE RÉSEAU -->
+    <div id="phase2" class="phase">
+        <div class="px-4 mb-3">
+            <button onclick="backToPhase1()" class="text-xs font-bold text-[#0284c7] flex items-center gap-1 mb-3">
+                <i class="fas fa-arrow-left"></i> Modifier le montant
+            </button>
+            <p class="font-extrabold text-xs text-slate-700 uppercase tracking-wide">2. Sélectionner le réseau Mobile Money</p>
+        </div>
+
+        <div class="method-card" onclick="selectNetwork('M-Pesa', '0813944647')">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/ce/M-Pesa_Logo.png" class="method-logo" alt="M-Pesa">
+            <span class="font-bold text-sm text-slate-800">Vodacom M-Pesa</span>
+        </div>
+        <div class="method-card" onclick="selectNetwork('Orange Money', '0853240089')">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c8/Orange_logo.svg" class="method-logo" alt="Orange Money">
+            <span class="font-bold text-sm text-slate-800">Orange Money</span>
+        </div>
+        <div class="method-card" onclick="selectNetwork('Airtel Money', '0961885473')">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/f/f1/Airtel_logo.svg" class="method-logo" alt="Airtel Money">
+            <span class="font-bold text-sm text-slate-800">Airtel Money</span>
+        </div>
+    </div>
+
+    <!-- PHASE 3 : INSTRUCTIONS & VALIDATION -->
+    <div id="phase3" class="phase">
+        <div class="p-5 bg-white m-4 rounded-2xl border 2px border-[#7dd3fc] box-shadow: 0 4px 12px rgba(0,0,0,0.02)">
+            <p class="text-center font-black text-[#0284c7] text-sm uppercase tracking-wide mb-1">Instructions de transfert</p>
+            <p class="text-[11px] text-slate-500 text-center font-medium mb-4">Effectuez le transfert vers ce numéro, puis soumettez vos preuves ci-dessous.</p>
+            
+            <div class="bg-sky-50 p-4 rounded-xl flex justify-between items-center mb-5 border border-sky-100">
+                <div>
+                    <span id="display-network" class="font-black text-xs uppercase text-[#0284c7] block"></span>
+                    <span id="platform-number" class="font-black text-lg text-slate-900">---</span>
+                </div>
+                <button onclick="copyNumber()" class="bg-[#0284c7] text-white text-xs font-bold px-3 py-2 rounded-lg active:scale-95 transition">Copier</button>
+            </div>
+
+            <label class="text-xs font-bold text-slate-600 block mb-1 uppercase tracking-wide">ID de la Transaction (SMS)</label>
+            <input type="text" id="transaction-id" class="input-field" placeholder="Ex: TXN123456789">
+
+            <label class="text-xs font-bold text-slate-600 block mb-1 uppercase tracking-wide">Votre Numéro d'Expéditeur</label>
+            <input type="tel" id="sender-number" class="input-field" placeholder="Ex: 0812345678">
+            
+            <button id="submit-btn" onclick="submitRecharge()" class="btn-main m-0 w-full mt-3">Envoyer la demande</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://firstsolar-e2ba3-default-rtdb.firebaseio.com/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const userId = localStorage.getItem('userId');
+
+        let finalAmount = 0;
+        let finalNetwork = "";
+
+        if (userId) {
+            db.ref('users/' + userId + '/balance').on('value', (snap) => {
+                const bal = parseFloat(snap.val() || 0);
+                document.getElementById('current-balance').innerText = bal.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
+            });
+        } else {
+            window.location.href = "index.html";
+        }
+
+        function selectAmount(amt, el) {
+            finalAmount = amt;
+            document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('custom-amount').value = amt;
+        }
+
+        function goToPhase2() {
+            finalAmount = parseFloat(document.getElementById('custom-amount').value);
+            if (!finalAmount || finalAmount < 10000) {
+                alert("Veuillez choisir ou saisir un montant valide (Minimum 10 000 FC).");
+                return;
+            }
+            document.getElementById('phase1').classList.remove('active');
+            document.getElementById('phase2').classList.add('active');
+        }
+
+        function selectNetwork(name, number) {
+            finalNetwork = name;
+            document.getElementById('display-network').innerText = name;
+            document.getElementById('platform-number').innerText = number;
+            document.getElementById('phase2').classList.remove('active');
+            document.getElementById('phase3').classList.add('active');
+        }
+
+        function copyNumber() {
+            const num = document.getElementById('platform-number').innerText;
+            navigator.clipboard.writeText(num).then(() => alert("Numéro copié dans le presse-papier !"));
+        }
+
+        async function submitRecharge() {
+            const transID = document.getElementById('transaction-id').value.trim();
+            const senderPhone = document.getElementById('sender-number').value.trim();
+            const submitBtn = document.getElementById('submit-btn');
+
+            if (!transID || !senderPhone) {
+                alert("Veuillez remplir l'ID de transaction et votre numéro d'expédition.");
+                return;
+            }
+
+            if (!userId) {
+                alert("Erreur d'authentification. Reconnectez-vous.");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = "TRAITEMENT EN COURS...";
+
+            const userSnap = await db.ref('users/' + userId + '/phone').once('value');
+            const userPhone = userSnap.val() || "Inconnu";
+
+            const reportData = {
+                userId: userId,
+                userPhone: userPhone,
+                montant: parseFloat(finalAmount),
+                amount: parseFloat(finalAmount),
+                reseau: finalNetwork,
+                transaction_id: transID,
+                expediteur: senderPhone,
+                status: "En attente",
+                date: new Date().toISOString()
+            };
+
+            db.ref('admin/recharges').push(reportData).then(() => {
+                alert(`Demande de recharge de ${finalAmount.toLocaleString('fr-FR')} FC soumise avec succès !`);
+                window.location.href = "profil.html";
+            }).catch((error) => {
+                alert("Erreur de connexion. Veuillez réessayer.");
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Envoyer la demande";
+            });
+        }
+
+        function backToPhase1() {
+            document.getElementById('phase2').classList.remove('active');
+            document.getElementById('phase1').classList.add('active');
+        }
+    </script>
+</body>
+</html>

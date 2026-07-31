@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRISTAR | Gains</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { 
+            background-color: #f0f9ff; 
+            font-family: 'Poppins', sans-serif; 
+            padding-bottom: 100px; 
+            margin: 0; 
+            color: #333;
+        }
+        .header-section { 
+            background: #ffffff; 
+            color: #0284c7; 
+            padding: 20px 15px; 
+            position: relative; 
+            border-bottom: 3px solid #7dd3fc; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+        .progress-container { 
+            width: 100%; 
+            background: #e0f2fe; 
+            height: 10px; 
+            border-radius: 6px; 
+            margin-top: 12px; 
+            display: flex; 
+            overflow: hidden; 
+            border: 1px solid #7dd3fc; 
+        }
+        .progress-segment { 
+            flex: 1; 
+            border-right: 1px solid #ffffff; 
+            background: linear-gradient(to bottom, #22c55e, #16a34a); 
+        }
+        .stats-box { 
+            background: white; 
+            margin: 15px; 
+            border-radius: 16px; 
+            padding: 16px; 
+            display: flex; 
+            justify-content: space-between; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
+            border: 2px solid #7dd3fc; 
+        }
+        .stats-label { 
+            font-size: 11px; 
+            color: #64748b; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+        }
+        .stats-value { 
+            font-size: 18px; 
+            font-weight: 900; 
+            color: #0f172a; 
+        }
+        .stats-value.green { 
+            color: #22c55e; 
+        }
+        .tab-container { 
+            display: flex; 
+            margin: 0 15px; 
+            gap: 10px; 
+        }
+        .tab { 
+            flex: 1; 
+            padding: 12px; 
+            text-align: center; 
+            border-radius: 25px; 
+            font-weight: 700; 
+            font-size: 13px;
+            border: 1.5px solid #cbd5e1; 
+            background: white; 
+            color: #64748b; 
+            cursor: pointer;
+        }
+        .tab.active { 
+            background: #0284c7; 
+            color: white; 
+            border-color: #0284c7; 
+            box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25); 
+        }
+        .investment-card { 
+            background: white; 
+            margin: 15px; 
+            border-radius: 20px; 
+            overflow: hidden; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04); 
+            border: 2px solid #7dd3fc; 
+        }
+        .product-header { 
+            padding: 12px 15px; 
+            font-weight: 800; 
+            color: #0284c7; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            border-bottom: 1px solid #e0f2fe; 
+            background: #f0f9ff; 
+        }
+        .prod-img { 
+            width: 100%; 
+            height: 180px; 
+            object-fit: cover; 
+            background: #f8fafc; 
+        }
+        .prod-info { 
+            padding: 15px; 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+        }
+        .collect-btn { 
+            background: #22c55e; 
+            color: white; 
+            width: calc(100% - 30px); 
+            margin: 0 15px 15px 15px; 
+            padding: 14px; 
+            border-radius: 30px; 
+            font-weight: 900; 
+            border: none; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); 
+            transition: 0.2s; 
+        }
+        .collect-btn:disabled { 
+            background: #cbd5e1 !important; 
+            color: #64748b !important; 
+            cursor: not-allowed; 
+            box-shadow: none; 
+        }
+        #empty-state { 
+            text-align: center; 
+            padding: 50px 20px; 
+            color: #94a3b8; 
+            font-weight: 700; 
+        }
+        .bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            width: 100%; 
+            background: white; 
+            display: flex; 
+            justify-content: space-around; 
+            padding: 10px 0; 
+            border-top: 1px solid #e2e8f0; 
+            z-index: 1000; 
+        }
+        .nav-item { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            font-size: 11px; 
+            color: #94a3b8; 
+            text-decoration: none; 
+            font-weight: 600; 
+        }
+        .nav-item.active { 
+            color: #0284c7; 
+            font-weight: 800; 
+        }
+        .nav-icon-circle { 
+            width: 26px; 
+            height: 26px; 
+            border: 2px solid #94a3b8; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin-bottom: 2px; 
+            font-size: 12px; 
+        }
+        .active .nav-icon-circle { 
+            border-color: #0ea5e9; 
+            background-color: #22c55e; 
+            color: white; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-section text-center">
+        <h1 class="text-2xl font-black italic tracking-wide flex items-center justify-center gap-2">
+            TRISTAR GAINS <i class="fa-solid fa-star text-xl text-[#22c55e]"></i>
+        </h1>
+        <div class="progress-container">
+            <div class="progress-segment"></div>
+            <div class="progress-segment"></div>
+            <div class="progress-segment"></div>
+            <div class="progress-segment"></div>
+            <div class="progress-segment"></div>
+        </div>
+    </div>
+
+    <p class="text-center text-slate-400 text-xs my-4 font-bold uppercase tracking-wider">- - - Mes équipements en production - - -</p>
+
+    <div class="stats-box">
+        <div>
+            <p class="stats-label">Appareils actifs :</p>
+            <p id="count-val" class="stats-value">0</p>
+        </div>
+        <div class="text-right">
+            <p class="stats-label">Solde actuel :</p>
+            <p id="total-val" class="stats-value green">0.00 FC</p>
+        </div>
+    </div>
+
+    <div class="tab-container">
+        <div class="tab active">En cours</div>
+        <div class="tab">Terminé</div>
+    </div>
+
+    <div id="investments-container">
+        <div id="empty-state">
+            <p>Chargement de vos équipements...</p>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="dashboard.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-redo-alt"></i></div><span>Commencer</span></a>
+        <a href="investir.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-tasks"></i></div><span>Investir</span></a>
+        <a href="gains.html" class="nav-item active"><div class="nav-icon-circle"><i class="fas fa-chart-line"></i></div><span>Gains</span></a>
+        <a href="agent.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-paper-plane"></i></div><span>Agent</span></a>
+        <a href="profil.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-ellipsis-h"></i></div><span>Profil</span></a>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://firstsolar-e2ba3-default-rtdb.firebaseio.com/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const userId = localStorage.getItem('userId');
+
+        function startTimer(endTime, elementId, btnId) {
+            const timerFunc = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = endTime - now;
+                const btn = document.getElementById(btnId);
+
+                if (distance < 0) {
+                    clearInterval(timerFunc);
+                    const el = document.getElementById(elementId);
+                    if(el) {
+                        el.innerText = "Prêt à collecter !";
+                        el.className = "font-bold text-sm text-emerald-600";
+                    }
+                    if(btn) {
+                        btn.disabled = false;
+                        btn.style.background = "#22c55e";
+                        btn.style.color = "#white";
+                    }
+                } else {
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    const el = document.getElementById(elementId);
+                    if(el) el.innerText = `${hours}h ${minutes}m ${seconds}s`;
+                    if(btn) btn.disabled = true;
+                }
+            }, 1000);
+        }
+
+        async function collectProfit(prodKey, amount) {
+            const btn = document.getElementById(`btn-${prodKey}`);
+            if(btn) {
+                btn.disabled = true;
+                btn.innerText = "COLLECTE...";
+            }
+
+            try {
+                const userRef = db.ref('users/' + userId);
+                const snap = await userRef.once('value');
+                const data = snap.val();
+                const now = new Date().getTime();
+
+                await userRef.update({
+                    balance: parseFloat(data.balance || 0) + parseFloat(amount)
+                });
+
+                await db.ref('users/' + userId + '/myProducts/' + prodKey).update({
+                    lastCollectTime: now
+                });
+
+                alert("Profit collecté avec succès !");
+                location.reload();
+            } catch (error) {
+                alert("Erreur lors de la collecte. Veuillez réessayer.");
+                if(btn) {
+                    btn.disabled = false;
+                    btn.innerText = "Collecter les profits";
+                }
+            }
+        }
+
+        if (userId) {
+            const userRef = db.ref('users/' + userId);
+            userRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                const container = document.getElementById('investments-container');
+                
+                if (data && data.myProducts) {
+                    const products = data.myProducts;
+                    const keys = Object.keys(products);
+                    document.getElementById('count-val').innerText = keys.length;
+                    document.getElementById('total-val').innerText = parseFloat(data.balance || 0).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
+
+                    let html = '';
+                    keys.forEach(key => {
+                        const p = products[key];
+                        const lastTime = p.lastCollectTime || new Date(p.purchaseDate).getTime();
+                        const nextCollect = lastTime + 86400000; 
+
+                        html += `
+                        <div class="investment-card">
+                            <div class="product-header">
+                                <span class="uppercase tracking-wide">${p.name}</span>
+                                <span class="text-[#22c55e] font-black text-xs flex items-center gap-1">
+                                    <i class="fas fa-circle-notch fa-spin"></i> Actif
+                                </span>
+                            </div>
+                            <img src="${p.image}" class="prod-img" alt="${p.name}">
+                            <div class="prod-info">
+                                <div>
+                                    <p class="stats-label">Revenu quotidien</p>
+                                    <p class="font-extrabold text-sm text-slate-800">${parseFloat(p.daily).toLocaleString('fr-FR')} FC</p>
+                                </div>
+                                <div>
+                                    <p class="stats-label">Prochaine collecte</p>
+                                    <p id="timer-${key}" class="font-extrabold text-sm text-sky-600">--:--:--</p>
+                                </div>
+                            </div>
+                            <button id="btn-${key}" onclick="collectProfit('${key}', ${p.daily})" class="collect-btn" disabled>Collecter les profits</button>
+                        </div>`;
+                        
+                        setTimeout(() => startTimer(nextCollect, `timer-${key}`, `btn-${key}`), 100);
+                    });
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = `<div id="empty-state"><p>Aucun équipement trouvé.</p></div>`;
+                }
+            });
+        } else {
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+</html>

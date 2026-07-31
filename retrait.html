@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRISTAR | Retrait</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { 
+            background-color: #f0f9ff; 
+            font-family: 'Poppins', sans-serif; 
+            padding-bottom: 30px; 
+            margin: 0;
+            color: #333;
+        }
+        .header-bar { 
+            background: white; 
+            padding: 16px 20px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            border-bottom: 3px solid #7dd3fc; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+        .back-btn {
+            width: 34px;
+            height: 34px;
+            background: #f1f5f9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #475569;
+            text-decoration: none;
+        }
+        .balance-box { 
+            background: linear-gradient(135deg, #0f172a, #1e293b); 
+            color: white; 
+            margin: 15px; 
+            padding: 20px; 
+            border-radius: 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border: 2px solid #7dd3fc; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .card-white { 
+            background: white; 
+            margin: 15px; 
+            padding: 20px; 
+            border-radius: 20px; 
+            border: 2px solid #7dd3fc;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+        .input-field { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border-radius: 12px; 
+            border: 1.5px solid #cbd5e1; 
+            margin-top: 5px; 
+            font-size: 14px; 
+            outline: none; 
+            font-weight: 700;
+            color: #0f172a;
+            transition: 0.2s;
+        }
+        .input-field:focus { 
+            border-color: #0284c7; 
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15); 
+        }
+        .btn-confirm { 
+            background: #22c55e; 
+            color: white; 
+            width: calc(100% - 30px); 
+            margin: 20px 15px; 
+            display: block; 
+            padding: 16px; 
+            border-radius: 30px; 
+            font-weight: 900; 
+            text-align: center; 
+            border: none; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            text-transform: uppercase; 
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); 
+        }
+        .btn-confirm:active { transform: scale(0.97); }
+        .btn-confirm:disabled { background: #cbd5e1; color: #64748b; box-shadow: none; cursor: not-allowed; }
+        .info-item { display: flex; align-items: center; gap: 10px; font-size: 11px; color: #475569; margin-bottom: 10px; font-weight: 600; }
+        .info-num { background: #0284c7; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; font-weight: 900; }
+        .border-dashed-custom { border: 2px dashed #bae6fd; }
+    </style>
+</head>
+<body>
+
+    <div class="header-bar">
+        <a href="profil.html" class="back-btn"><i class="fas fa-chevron-left text-xs"></i></a>
+        <span class="font-black text-[#0284c7] italic text-base flex items-center gap-2">
+            TRISTAR RETRAIT <i class="fa-solid fa-star text-sm text-[#22c55e]"></i>
+        </span>
+        <a href="historique_solde.html" class="text-[#0284c7] text-xs font-bold uppercase tracking-wider">Historique</a>
+    </div>
+
+    <div class="balance-box">
+        <div>
+            <p class="text-xs opacity-80 font-bold uppercase tracking-wider text-slate-300">Solde retirable :</p>
+            <p id="display-balance" class="text-2xl font-black text-[#22c55e] mt-1">0,00 FC</p>
+        </div>
+        <i class="fas fa-wallet text-3xl opacity-20 text-white"></i>
+    </div>
+
+    <div class="px-4 mt-2">
+        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide px-1">Montant du retrait</label>
+        <div class="relative mt-1">
+            <span class="absolute left-4 top-3.5 text-slate-800 font-extrabold text-sm">FC</span>
+            <input type="number" id="withdraw-amount" class="input-field pl-12" placeholder="Min. 5 000 FC">
+        </div>
+    </div>
+
+    <div class="card-white">
+        <div class="flex justify-between items-center mb-4">
+            <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Compte Mobile Money</span>
+            <a href="compte.html" class="text-[#0284c7] text-xs font-extrabold bg-sky-50 px-3 py-1 rounded-full border border-sky-200 uppercase">Paramètres</a>
+        </div>
+        <div id="bank-display" class="bg-sky-50/50 p-4 rounded-xl mb-4 text-xs text-slate-500 border-dashed-custom text-center font-medium">
+            Aucun compte lié. Cliquez sur "Paramètres" pour configurer.
+        </div>
+
+        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide mb-1 block">Mot de passe de connexion</label>
+        <div class="relative">
+            <input type="password" id="login-pass" class="input-field" placeholder="Entrez votre mot de passe">
+        </div>
+    </div>
+
+    <button id="confirm-btn" onclick="processWithdrawal()" class="btn-confirm">Confirmer le retrait</button>
+
+    <div class="px-5 py-4 bg-white m-4 rounded-2xl border 2px border-[#7dd3fc] box-shadow: 0 4px 12px rgba(0,0,0,0.02)">
+        <p class="text-xs font-black text-slate-800 uppercase tracking-wide mb-3">Règles de retrait :</p>
+        <div class="info-item"><span class="info-num">1</span><p>Heures de traitement : 10h00 - 17h00.</p></div>
+        <div class="info-item"><span class="info-num">2</span><p>Montant minimum de retrait : 5 000 FC.</p></div>
+        <div class="info-item"><span class="info-num">3</span><p>Frais de traitement applicables : 15 %.</p></div>
+        <div class="info-item"><span class="info-num">4</span><p>Limite autorisée : 1 retrait par jour.</p></div>
+        <div class="info-item"><span class="info-num">5</span><p>Condition requise : Avoir au moins 1 produit actif.</p></div>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://firstsolar-e2ba3-default-rtdb.firebaseio.com/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const userId = localStorage.getItem('userId');
+
+        if (userId) {
+            db.ref('users/' + userId).on('value', (snapshot) => {
+                const userData = snapshot.val();
+                if (userData) {
+                    const balance = parseFloat(userData.balance || 0);
+                    document.getElementById('display-balance').innerText = balance.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
+                    
+                    const displayArea = document.getElementById('bank-display');
+                    if(userData.bankInfo) {
+                        displayArea.innerHTML = `
+                            <div class="flex flex-col items-start text-left">
+                                <span class="text-[#0284c7] font-black text-sm tracking-wide uppercase">${userData.bankInfo.banque}</span>
+                                <span class="text-slate-900 font-extrabold text-base">${userData.bankInfo.numero}</span>
+                                <span class="text-[11px] uppercase text-slate-500 font-semibold mt-0.5">Titulaire : ${userData.bankInfo.titulaire}</span>
+                            </div>`;
+                        displayArea.classList.add('border-solid', 'bg-sky-50', 'border-sky-200');
+                        displayArea.classList.remove('text-center', 'border-dashed-custom');
+                    }
+                }
+            });
+        } else {
+            window.location.href = "index.html";
+        }
+
+        async function processWithdrawal() {
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            const pass = document.getElementById('login-pass').value;
+            const btn = document.getElementById('confirm-btn');
+
+            if (!userId) return;
+            if (isNaN(amount) || amount < 5000) { alert("Le montant minimum est de 5 000 FC."); return; }
+            if (!pass) { alert("Veuillez saisir votre mot de passe."); return; }
+
+            btn.disabled = true;
+            btn.innerText = "TRAITEMENT EN COURS...";
+
+            try {
+                const userRef = db.ref('users/' + userId);
+                const snap = await userRef.once('value');
+                const userData = snap.val();
+
+                if (!userData.canWithdraw) {
+                    alert("Erreur : Vous devez acheter un produit avant d'effectuer un retrait.");
+                    btn.disabled = false; btn.innerText = "Confirmer le retrait";
+                    return;
+                }
+
+                if (userData.balance < amount) {
+                    alert("Solde insuffisant.");
+                    btn.disabled = false; btn.innerText = "Confirmer le retrait";
+                    return;
+                }
+
+                if (userData.password !== pass) {
+                    alert("Mot de passe incorrect.");
+                    btn.disabled = false; btn.innerText = "Confirmer le retrait";
+                    return;
+                }
+
+                const fees = amount * 0.15;
+                const netAmount = amount - fees;
+
+                const adminRequestRef = db.ref('admin/withdrawals').push();
+                await adminRequestRef.set({
+                    userId: userId,
+                    phone: userData.phone,
+                    amount: amount,
+                    fees: fees,
+                    netAmount: netAmount,
+                    status: "En attente",
+                    date: new Date().toISOString(),
+                    bankInfo: userData.bankInfo || "Non configuré"
+                });
+
+                await userRef.update({ balance: userData.balance - amount });
+
+                alert("Votre demande de retrait a été soumise avec succès !");
+                window.location.href = "profil.html";
+
+            } catch (e) {
+                alert("Erreur de connexion. Veuillez réessayer.");
+                btn.disabled = false; btn.innerText = "Confirmer le retrait";
+            }
+        }
+    </script>
+</body>
+</html>

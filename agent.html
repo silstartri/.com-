@@ -170,7 +170,7 @@
             width: 100%; 
             background: white; 
             display: flex; 
-            justify-space: space-around; 
+            justify-content: space-around; 
             padding: 10px 0; 
             border-top: 1px solid #e2e8f0; 
             z-index: 1000; 
@@ -286,11 +286,26 @@
         const db = firebase.database();
         const userId = localStorage.getItem('userId');
         
-        // URL exacte de votre dépôt GitHub Pages
         const platformLink = "https://silstartri.github.io/.com-/register.html";
 
+        // Fonction pour convertir un identifiant en un code de 6 lettres minuscules
+        function generate6LetterCode(str) {
+            let cleanStr = str.replace(/[^a-zA-Z]/g, '').toLowerCase();
+            if (cleanStr.length >= 6) {
+                return cleanStr.substring(0, 6);
+            }
+            // Si l'ID n'a pas assez de lettres, on complète avec des lettres a-z
+            const letters = 'abcdefghijklmnopqrstuvwxyz';
+            while (cleanStr.length < 6) {
+                cleanStr += letters.charAt(Math.floor(Math.random() * letters.length));
+            }
+            return cleanStr;
+        }
+
         if (userId) {
-            document.getElementById('invite-link').innerText = `${platformLink}?ref=${userId}`;
+            // Génération du code à 6 lettres minuscules
+            const refCode = generate6LetterCode(userId);
+            document.getElementById('invite-link').innerText = `${platformLink}?ref=${refCode}`;
 
             db.ref('users').on('value', (snapshot) => {
                 const allUsers = snapshot.val();
@@ -298,36 +313,39 @@
                 let lv1Comm = 0, lv2Comm = 0, lv3Comm = 0;
                 let totalInvest = 0;
 
-                const getRefId = (u) => u.referrer || u.referrerId || u.parrainId;
+                const getRefId = (u) => u.referrer || u.referrerId || u.parrainId || u.refCode;
 
                 if (allUsers) {
                     for (let id in allUsers) {
                         const user = allUsers[id];
+                        const userRef = getRefId(user);
                         
                         // Niveau 1
-                        if (getRefId(user) === userId) {
+                        if (userRef === userId || userRef === refCode) {
                             lv1Count++;
                             let invest = parseFloat(user.totalInvested || 0);
                             totalInvest += invest;
-                            lv1Comm += invest * 0.25; // 25%
+                            lv1Comm += invest * 0.25;
 
                             // Niveau 2
                             for (let id2 in allUsers) {
                                 const user2 = allUsers[id2];
-                                if (getRefId(user2) === id) {
+                                const user2Ref = getRefId(user2);
+                                if (user2Ref === id || user2Ref === generate6LetterCode(id)) {
                                     lv2Count++;
                                     let invest2 = parseFloat(user2.totalInvested || 0);
                                     totalInvest += invest2;
-                                    lv2Comm += invest2 * 0.03; // 3%
+                                    lv2Comm += invest2 * 0.03;
 
                                     // Niveau 3
                                     for (let id3 in allUsers) {
                                         const user3 = allUsers[id3];
-                                        if (getRefId(user3) === id2) {
+                                        const user3Ref = getRefId(user3);
+                                        if (user3Ref === id2 || user3Ref === generate6LetterCode(id2)) {
                                             lv3Count++;
                                             let invest3 = parseFloat(user3.totalInvested || 0);
                                             totalInvest += invest3;
-                                            lv3Comm += invest3 * 0.01; // 1%
+                                            lv3Comm += invest3 * 0.01;
                                         }
                                     }
                                 }

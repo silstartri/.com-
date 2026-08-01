@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRISTAR | Agent</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { 
+            background-color: #f0f9ff; 
+            font-family: 'Poppins', sans-serif; 
+            padding-bottom: 100px; 
+            margin: 0; 
+            color: #333;
+        }
+        .banner { 
+            background: linear-gradient(135deg, #0284c7, #22c55e); 
+            color: white; 
+            padding: 25px 20px; 
+            position: relative; 
+            overflow: hidden; 
+            border-bottom: 3px solid #7dd3fc; 
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
+        }
+        .banner h2 { 
+            font-size: 22px; 
+            font-weight: 900; 
+            line-height: 1.2; 
+            text-transform: uppercase; 
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.2); 
+        }
+        .banner p { 
+            font-size: 13px; 
+            font-weight: 600; 
+            opacity: 0.95; 
+            margin-top: 5px; 
+            color: #ffffff; 
+        }
+        .stats-summary { 
+            background: white; 
+            padding: 18px; 
+            margin: 15px; 
+            border-radius: 16px; 
+            border: 2px solid #7dd3fc; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        .stats-row { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 8px; 
+            font-size: 13px; 
+        }
+        .stats-label { 
+            font-weight: 700; 
+            color: #64748b; 
+        }
+        .stats-value { 
+            font-weight: 900; 
+            color: #0284c7; 
+        }
+        .stats-note { 
+            font-size: 10px; 
+            color: #94a3b8; 
+            margin-top: 8px; 
+            font-weight: 600; 
+            text-align: center;
+        }
+        .invite-card { 
+            background: white; 
+            margin: 15px; 
+            border-radius: 20px; 
+            padding: 18px; 
+            border: 2px solid #7dd3fc; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+        }
+        .invite-header { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            font-weight: 800; 
+            color: #0284c7; 
+            margin-bottom: 12px; 
+            font-size: 14px;
+        }
+        .link-container { 
+            background: #f8fafc; 
+            border: 1.5px solid #e2e8f0; 
+            border-radius: 12px; 
+            padding: 14px; 
+            position: relative; 
+        }
+        .link-text { 
+            font-size: 12px; 
+            color: #475569; 
+            word-break: break-all; 
+            padding-right: 80px; 
+            font-weight: 700; 
+        }
+        .copy-btn { 
+            position: absolute; 
+            right: 8px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            background: #22c55e; 
+            color: white; 
+            border: none; 
+            padding: 8px 14px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: 900; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3); 
+            transition: 0.2s;
+        }
+        .copy-btn:active { transform: translateY(-50%) scale(0.95); }
+        
+        .level-card { 
+            background: white; 
+            margin: 12px 15px; 
+            border-radius: 16px; 
+            padding: 16px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03); 
+            border: 1px solid #e2e8f0;
+        }
+        .level-card.lv1 { border-left: 5px solid #22c55e; }
+        .level-card.lv2 { border-left: 5px solid #0284c7; }
+        .level-card.lv3 { border-left: 5px solid #f59e0b; }
+
+        .level-header { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding-bottom: 10px; 
+            border-bottom: 1px solid #f1f5f9; 
+            margin-bottom: 10px; 
+        }
+        .level-title { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            font-weight: 800; 
+            font-size: 15px; 
+            color: #0f172a;
+        }
+        .comm-rate { 
+            font-weight: 900; 
+            font-size: 12px; 
+        }
+        .row-data { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 12px; 
+            color: #64748b; 
+            margin-bottom: 6px; 
+            font-weight: 600;
+        }
+        .val-black { 
+            color: #0f172a; 
+            font-weight: 800; 
+        }
+        
+        .bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            width: 100%; 
+            background: white; 
+            display: flex; 
+            justify-space: space-around; 
+            padding: 10px 0; 
+            border-top: 1px solid #e2e8f0; 
+            z-index: 1000; 
+        }
+        .nav-item { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            font-size: 11px; 
+            color: #94a3b8; 
+            text-decoration: none; 
+            font-weight: 600; 
+        }
+        .nav-item.active { 
+            color: #0284c7; 
+            font-weight: 800; 
+        }
+        .nav-icon-circle { 
+            width: 26px; 
+            height: 26px; 
+            border: 2px solid #94a3b8; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin-bottom: 2px; 
+            font-size: 12px; 
+        }
+        .active .nav-icon-circle { 
+            border-color: #0ea5e9; 
+            background-color: #22c55e; 
+            color: white; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="banner">
+        <h2>Invitez des amis et<br>gagnez de l'argent !</h2>
+        <p>Partagez votre lien et recevez jusqu'à 25%<br>de commissions sur votre équipe !</p>
+    </div>
+
+    <div class="stats-summary">
+        <div class="stats-row">
+            <span class="stats-label">Investissement de l'équipe :</span>
+            <span id="total-team-invest" class="stats-value">0 FC</span>
+        </div>
+        <div class="stats-row">
+            <span class="stats-label">Taille totale de l'équipe :</span>
+            <span id="team-size" class="text-emerald-600 font-black">0 membre(s)</span>
+        </div>
+        <p class="stats-note"><i class="fas fa-info-circle mr-1"></i> Les commissions sont créditées instantanément lors de chaque achat.</p>
+    </div>
+
+    <div class="invite-card">
+        <div class="invite-header">
+            <i class="fas fa-link text-[#22c55e]"></i>
+            <span>Votre lien d'invitation exclusif</span>
+        </div>
+        <div class="link-container">
+            <div id="invite-link" class="link-text">Chargement du lien...</div>
+            <button onclick="copyLink()" class="copy-btn"><i class="fas fa-copy mr-1"></i> Copier</button>
+        </div>
+    </div>
+
+    <div class="level-card lv1">
+        <div class="level-header">
+            <div class="level-title">
+                <span class="bg-emerald-500 text-white font-black w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span> 
+                Niveau 1 (Direct)
+            </div>
+            <span class="comm-rate text-emerald-600">Commission de 25%</span>
+        </div>
+        <div class="row-data"><span>Commissions estimées</span><span id="comm-lv1" class="val-black text-emerald-600">0,00 FC</span></div>
+        <div class="row-data"><span>Membres inscrits</span><span id="count-lv1" class="val-black">0</span></div>
+    </div>
+
+    <div class="level-card lv2">
+        <div class="level-header">
+            <div class="level-title">
+                <span class="bg-sky-500 text-white font-black w-6 h-6 rounded-full flex items-center justify-center text-xs">2</span> 
+                Niveau 2 (Indirect)
+            </div>
+            <span class="comm-rate text-sky-600">Commission de 3%</span>
+        </div>
+        <div class="row-data"><span>Commissions estimées</span><span id="comm-lv2" class="val-black text-sky-600">0,00 FC</span></div>
+        <div class="row-data"><span>Membres inscrits</span><span id="count-lv2" class="val-black">0</span></div>
+    </div>
+
+    <div class="level-card lv3">
+        <div class="level-header">
+            <div class="level-title">
+                <span class="bg-amber-500 text-white font-black w-6 h-6 rounded-full flex items-center justify-center text-xs">3</span> 
+                Niveau 3 (Subordonné)
+            </div>
+            <span class="comm-rate text-amber-500">Commission de 1%</span>
+        </div>
+        <div class="row-data"><span>Commissions estimées</span><span id="comm-lv3" class="val-black text-amber-500">0,00 FC</span></div>
+        <div class="row-data"><span>Membres inscrits</span><span id="count-lv3" class="val-black">0</span></div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="dashboard.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-redo-alt"></i></div><span>Commencer</span></a>
+        <a href="investir.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-tasks"></i></div><span>Investir</span></a>
+        <a href="gains.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-chart-line"></i></div><span>Gains</span></a>
+        <a href="agent.html" class="nav-item active"><div class="nav-icon-circle"><i class="fas fa-paper-plane"></i></div><span>Agent</span></a>
+        <a href="profil.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-ellipsis-h"></i></div><span>Profil</span></a>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://firstsolar-e2ba3-default-rtdb.firebaseio.com/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const userId = localStorage.getItem('userId');
+        
+        // URL exacte de votre dépôt GitHub Pages
+        const platformLink = "https://silstartri.github.io/.com-/register.html";
+
+        if (userId) {
+            document.getElementById('invite-link').innerText = `${platformLink}?ref=${userId}`;
+
+            db.ref('users').on('value', (snapshot) => {
+                const allUsers = snapshot.val();
+                let lv1Count = 0, lv2Count = 0, lv3Count = 0;
+                let lv1Comm = 0, lv2Comm = 0, lv3Comm = 0;
+                let totalInvest = 0;
+
+                const getRefId = (u) => u.referrer || u.referrerId || u.parrainId;
+
+                if (allUsers) {
+                    for (let id in allUsers) {
+                        const user = allUsers[id];
+                        
+                        // Niveau 1
+                        if (getRefId(user) === userId) {
+                            lv1Count++;
+                            let invest = parseFloat(user.totalInvested || 0);
+                            totalInvest += invest;
+                            lv1Comm += invest * 0.25; // 25%
+
+                            // Niveau 2
+                            for (let id2 in allUsers) {
+                                const user2 = allUsers[id2];
+                                if (getRefId(user2) === id) {
+                                    lv2Count++;
+                                    let invest2 = parseFloat(user2.totalInvested || 0);
+                                    totalInvest += invest2;
+                                    lv2Comm += invest2 * 0.03; // 3%
+
+                                    // Niveau 3
+                                    for (let id3 in allUsers) {
+                                        const user3 = allUsers[id3];
+                                        if (getRefId(user3) === id2) {
+                                            lv3Count++;
+                                            let invest3 = parseFloat(user3.totalInvested || 0);
+                                            totalInvest += invest3;
+                                            lv3Comm += invest3 * 0.01; // 1%
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                document.getElementById('team-size').innerText = (lv1Count + lv2Count + lv3Count) + " membre(s)";
+                document.getElementById('total-team-invest').innerText = totalInvest.toLocaleString('fr-FR') + " FC";
+                
+                document.getElementById('count-lv1').innerText = lv1Count;
+                document.getElementById('comm-lv1').innerText = lv1Comm.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
+                
+                document.getElementById('count-lv2').innerText = lv2Count;
+                document.getElementById('comm-lv2').innerText = lv2Comm.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
+                
+                document.getElementById('count-lv3').innerText = lv3Count;
+                document.getElementById('comm-lv3').innerText = lv3Comm.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
+            });
+        } else {
+            window.location.href = "index.html";
+        }
+
+        function copyLink() {
+            const link = document.getElementById('invite-link').innerText;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(link).then(() => {
+                    alert("Lien d'invitation copié !");
+                }).catch(() => fallbackCopy(link));
+            } else {
+                fallbackCopy(link);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const tempInput = document.createElement("input");
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            alert("Lien d'invitation copié !");
+        }
+    </script>
+</body>
+</html>

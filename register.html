@@ -12,23 +12,23 @@
     <style>
         body { 
             font-family: 'Poppins', sans-serif; 
-            background-color: #e0f2fe; /* Bleu ciel très clair pour le fond */
+            background-color: #e0f2fe; 
             color: #333;
         }
 
         .logo-wrapper { text-align: center; margin-bottom: 30px; }
         .logo-container {
             display: inline-block;
-            background: #ffffff; /* Blanc */
+            background: #ffffff;
             padding: 10px 20px;
-            border: 3px solid #0ea5e9; /* Bleu ciel */
+            border: 3px solid #0ea5e9;
             border-radius: 8px;
             position: relative;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
         .t-top {
             background: #ffffff;
-            border: 3px solid #0ea5e9; /* Bleu ciel */
+            border: 3px solid #0ea5e9;
             border-bottom: none;
             width: 40px;
             height: 40px;
@@ -39,13 +39,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #16a34a; /* Vert */
+            color: #16a34a;
             font-size: 24px;
             font-weight: 900;
             border-radius: 5px 5px 0 0;
         }
         .main-text {
-            color: #0284c7; /* Bleu ciel foncé */
+            color: #0284c7;
             font-size: 28px;
             letter-spacing: -0.5px;
             display: flex;
@@ -54,7 +54,7 @@
             font-weight: 900;
         }
         .slogan {
-            color: #16a34a; /* Vert */
+            color: #16a34a;
             font-size: 11px;
             font-weight: 900;
             text-transform: uppercase;
@@ -69,7 +69,7 @@
             margin-bottom: 12px;
             display: flex;
             align-items: center;
-            border: 2px solid #7dd3fc; /* Bleu ciel doux */
+            border: 2px solid #7dd3fc;
             transition: 0.3s;
         }
         .input-group:focus-within {
@@ -84,14 +84,14 @@
             font-size: 15px;
         }
         .input-group span {
-            color: #16a34a; /* Vert */
+            color: #16a34a;
             font-weight: bold;
             margin-right: 10px;
             border-right: 1px solid #e5e7eb;
             padding-right: 10px;
         }
         .btn-register {
-            background-color: #22c55e; /* Vert */
+            background-color: #22c55e;
             color: #ffffff;
             width: 100%;
             padding: 15px;
@@ -154,13 +154,23 @@
     </div>
 
     <script>
-        // CONFIGURATION FIREBASE (Inchangée)
+        // CONFIGURATION FIREBASE
         const firebaseConfig = {
             databaseURL: "https://firstsolar-e2ba3-default-rtdb.firebaseio.com/"
         };
         
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+
+        // Fonction pour générer un code de parrainage aléatoire à 6 lettres
+        function generateRefCode() {
+            const chars = 'abcdefghijklmnopqrstuvwxyz';
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
 
         // RÉCUPÉRATION AUTOMATIQUE DU CODE DE PARRAINAGE DANS L'URL
         window.onload = function() {
@@ -175,12 +185,19 @@
         document.getElementById('regForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const name = document.getElementById('name').value;
-            const phone = document.getElementById('phone').value;
+            const name = document.getElementById('name').value.trim();
+            const rawPhone = document.getElementById('phone').value.trim();
+            const phone = rawPhone.replace(/\s+/g, ''); // Nettoyer les espaces
             const pin = document.getElementById('pin').value;
             const pinConfirm = document.getElementById('pinConfirm').value;
-            const referrerId = document.getElementById('ref').value;
+            const referrerId = document.getElementById('ref').value.trim().toLowerCase();
             const btn = document.getElementById('submitBtn');
+
+            // Vérification que le numéro ne contient que des chiffres (important pour la clé Firebase)
+            if (!/^\d+$/.test(phone)) {
+                alert("Veuillez entrer un numéro de téléphone valide (uniquement des chiffres).");
+                return;
+            }
 
             if (pin.length !== 6) {
                 alert("Le code PIN doit avoir 6 chiffres.");
@@ -191,7 +208,7 @@
                 return;
             }
 
-            // VÉRIFICATION STRICTE DU CODE D'INVITATION (6 lettres minuscules)
+            // VÉRIFICATION STRICTE DU CODE D'INVITATION
             if (referrerId && !/^[a-z]{6}$/.test(referrerId)) {
                 alert("Le code d'invitation doit contenir exactement 6 lettres minuscules (exemple: abcdef).");
                 return;
@@ -200,32 +217,35 @@
             btn.disabled = true;
             btn.innerText = "PATIENTEZ...";
 
-            // Vérifier si le numéro existe déjà
-            db.ref('users').orderByChild('phone').equalTo(phone).once('value', snapshot => {
+            // On vérifie directement le nœud du numéro de téléphone
+            const userRef = db.ref('users/' + phone);
+            
+            userRef.once('value', snapshot => {
                 if (snapshot.exists()) {
-                    alert("Ce numéro est déjà utilisé.");
+                    alert("Ce numéro de compte existe déjà.");
                     btn.disabled = false;
                     btn.innerText = "S'INSCRIRE MAINTENANT";
                 } else {
-                    // Création de l'utilisateur
-                    const newUserRef = db.ref('users').push();
-                    const newUserId = newUserRef.key;
-                    
-                    newUserRef.set({
-                        userId: newUserId,
+                    // Création du compte avec le numéro de téléphone comme Identifiant Base de données
+                    const newRefCode = generateRefCode(); // Code généré pour CE nouvel utilisateur
+
+                    userRef.set({
+                        userId: phone,          // L'identifiant est désormais le numéro
                         name: name,
                         phone: phone,
                         password: pin,
-                        referrer: referrerId || "Direct", 
+                        refCode: newRefCode,    // Le code à 6 lettres qu'il donnera à ses filleuls
+                        referrer: referrerId || "Direct", // Le code de la personne qui l'a invité
                         balance: 1000, 
                         totalEarnings: 0,
                         totalInvested: 0,
+                        refGains: 0,
                         dateJoined: new Date().toLocaleString()
                     }).then(() => {
-                        alert("Compte créé avec succès !");
+                        alert("Compte créé avec succès ! Votre code d'invitation est : " + newRefCode);
                         window.location.href = "index.html";
                     }).catch(error => {
-                        alert("Erreur: " + error.message);
+                        alert("Erreur de connexion: " + error.message);
                         btn.disabled = false;
                         btn.innerText = "S'INSCRIRE MAINTENANT";
                     });

@@ -139,7 +139,7 @@
 
     <div class="promo-box">
         <i class="fas fa-bullhorn text-[#22c55e] text-lg"></i>
-        <marquee class="text-xs font-bold text-slate-700">Commissions d'équipe : Niveau 1: 25% | Niveau 2: 3% | Niveau 3: 1%</marquee>
+        <marquee class="text-xs font-bold text-slate-700">Commissions d'équipe : Niveau 1: 30% | Niveau 2: 2% | Niveau 3: 1%</marquee>
     </div>
 
     <p class="text-center text-slate-400 font-bold text-xs my-6 uppercase tracking-widest">- - - Équipements Tristar (Fers à repasser) - - -</p>
@@ -194,43 +194,6 @@
             container.innerHTML = html;
         }
 
-        // Fonction pour distribuer automatiquement les commissions de parrainage
-        async function payReferralCommissions(purchaserData, productPrice) {
-            const rates = [0.25, 0.03, 0.01]; // Lvl 1: 25%, Lvl 2: 3%, Lvl 3: 1%
-            let currentRefId = purchaserData.referrerId || purchaserData.parrainId;
-
-            for (let level = 0; level < 3; level++) {
-                if (!currentRefId) break; // Fin de la chaîne si pas de parrain
-
-                const refSnap = await db.ref('users/' + currentRefId).once('value');
-                const refUser = refSnap.val();
-
-                if (refUser) {
-                    const commission = productPrice * rates[level];
-                    const newBalance = (refUser.balance || 0) + commission;
-                    const newRefGains = (refUser.refGains || 0) + commission;
-
-                    await db.ref('users/' + currentRefId).update({
-                        balance: newBalance,
-                        refGains: newRefGains
-                    });
-
-                    // Enregistrement de l'historique des commissions
-                    await db.ref('users/' + currentRefId + '/commissions').push({
-                        amount: commission,
-                        level: level + 1,
-                        fromUser: userId,
-                        date: new Date().toISOString()
-                    });
-
-                    // Passage au parrain supérieur (Niveau suivant)
-                    currentRefId = refUser.referrerId || refUser.parrainId;
-                } else {
-                    break;
-                }
-            }
-        }
-
         window.handlePurchase = async (id) => {
             if (!userId) {
                 alert("Veuillez vous connecter d'abord.");
@@ -250,13 +213,11 @@
                 const currentBalance = userData ? (userData.balance || 0) : 0;
 
                 if (currentBalance >= vip.price) {
-                    // Déduction du solde de l'acheteur & activation des retraits
                     await userRef.update({
                         balance: currentBalance - vip.price,
                         canWithdraw: true 
                     });
 
-                    // Ajout du produit dans les achats
                     await db.ref('users/' + userId + '/myProducts').push({
                         name: vip.name,
                         daily: vip.daily,
@@ -264,9 +225,6 @@
                         purchaseDate: new Date().toISOString(),
                         lastCollectTime: new Date().getTime()
                     });
-
-                    // Versement automatique des commissions de parrainage
-                    await payReferralCommissions(userData, vip.price);
 
                     alert("Achat effectué avec succès ! Vos revenus seront générés toutes les 24 heures.");
                     window.location.href = "gains.html";

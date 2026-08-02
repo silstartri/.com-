@@ -286,12 +286,11 @@
         const db = firebase.database();
         const userId = localStorage.getItem('userId');
         
-        // Obtenir l'URL de base dynamique
         const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
         const platformLink = `${baseUrl}/register.html`;
 
         if (userId) {
-            // Récupérer les informations de l'utilisateur connecté pour afficher son VRAI refCode à 6 lettres
+            // Afficher le lien avec le refCode de l'utilisateur connecté
             db.ref('users/' + userId).once('value').then(snapshot => {
                 const userData = snapshot.val();
                 if (userData) {
@@ -306,24 +305,28 @@
                 let lv1Comm = 0, lv2Comm = 0, lv3Comm = 0;
                 let totalInvest = 0;
 
-                // Fonction pour récupérer le code ou l'ID du parrain d'un utilisateur
-                const getRefValue = (u) => u.referrer || u.referrerId || u.parrainId || u.parrain;
-
-                // Récupérer d'abord le refCode et les identifiants de l'utilisateur connecté
                 db.ref('users/' + userId).once('value').then(currentUserSnap => {
                     const currentUser = currentUserSnap.val() || {};
                     const myRefCode = currentUser.refCode;
                     const myPhone = currentUser.phone;
 
+                    // Fonction universelle pour vérifier si un utilisateur appartient à un parrain donné
+                    const isMyReferral = (userObj, targetId, targetPhone, targetRefCode) => {
+                        const refVal = userObj.referrer || userObj.referrerId || userObj.parrainId || userObj.parrain;
+                        if (!refVal) return false;
+                        
+                        // Compare avec l'ID Firebase, le numéro de téléphone ou le code à 6 lettres du parrain
+                        return refVal === targetId || 
+                               (targetPhone && refVal === targetPhone) || 
+                               (targetRefCode && refVal === targetRefCode);
+                    };
+
                     if (allUsers) {
                         for (let id in allUsers) {
                             const user = allUsers[id];
-                            const refVal = getRefValue(user);
-
-                            // Vérifie si le parrain correspond soit à l'ID, soit au téléphone, soit au refCode de l'utilisateur connecté
-                            const isLv1 = (refVal === userId || refVal === myPhone || (myRefCode && refVal === myRefCode));
-
-                            if (isLv1) {
+                            
+                            // Niveau 1
+                            if (isMyReferral(user, userId, myPhone, myRefCode)) {
                                 lv1Count++;
                                 let invest = parseFloat(user.totalInvested || 0);
                                 totalInvest += invest;
@@ -331,14 +334,13 @@
 
                                 const subRefCode = user.refCode;
                                 const subPhone = user.phone;
+                                const subId = id;
 
                                 // Niveau 2
                                 for (let id2 in allUsers) {
                                     const user2 = allUsers[id2];
-                                    const refVal2 = getRefValue(user2);
-                                    const isLv2 = (refVal2 === id || refVal2 === subPhone || (subRefCode && refVal2 === subRefCode));
-
-                                    if (isLv2) {
+                                    
+                                    if (isMyReferral(user2, subId, subPhone, subRefCode)) {
                                         lv2Count++;
                                         let invest2 = parseFloat(user2.totalInvested || 0);
                                         totalInvest += invest2;
@@ -346,14 +348,13 @@
 
                                         const subRefCode2 = user2.refCode;
                                         const subPhone2 = user2.phone;
+                                        const subId2 = id2;
 
                                         // Niveau 3
                                         for (let id3 in allUsers) {
                                             const user3 = allUsers[id3];
-                                            const refVal3 = getRefValue(user3);
-                                            const isLv3 = (refVal3 === id2 || refVal3 === subPhone2 || (subRefCode2 && refVal3 === subRefCode2));
-
-                                            if (isLv3) {
+                                            
+                                            if (isMyReferral(user3, subId2, subPhone2, subRefCode2)) {
                                                 lv3Count++;
                                                 let invest3 = parseFloat(user3.totalInvested || 0);
                                                 totalInvest += invest3;

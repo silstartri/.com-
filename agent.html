@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TRISTAR | Agent</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -286,26 +286,19 @@
         const db = firebase.database();
         const userId = localStorage.getItem('userId');
         
-        const platformLink = "https://silstartri.github.io/.com-/register.html";
-
-        // Fonction pour convertir un identifiant en un code de 6 lettres minuscules
-        function generate6LetterCode(str) {
-            let cleanStr = str.replace(/[^a-zA-Z]/g, '').toLowerCase();
-            if (cleanStr.length >= 6) {
-                return cleanStr.substring(0, 6);
-            }
-            // Si l'ID n'a pas assez de lettres, on complète avec des lettres a-z
-            const letters = 'abcdefghijklmnopqrstuvwxyz';
-            while (cleanStr.length < 6) {
-                cleanStr += letters.charAt(Math.floor(Math.random() * letters.length));
-            }
-            return cleanStr;
-        }
+        // Obtenir l'URL de base dynamique
+        const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+        const platformLink = `${baseUrl}/register.html`;
 
         if (userId) {
-            // Génération du code à 6 lettres minuscules
-            const refCode = generate6LetterCode(userId);
-            document.getElementById('invite-link').innerText = `${platformLink}?ref=${refCode}`;
+            // Récupérer les informations de l'utilisateur connecté pour afficher son VRAI refCode à 6 lettres
+            db.ref('users/' + userId).once('value').then(snapshot => {
+                const userData = snapshot.val();
+                if (userData) {
+                    const userRefCode = userData.refCode || userId;
+                    document.getElementById('invite-link').innerText = `${platformLink}?ref=${userRefCode}`;
+                }
+            });
 
             db.ref('users').on('value', (snapshot) => {
                 const allUsers = snapshot.val();
@@ -313,58 +306,78 @@
                 let lv1Comm = 0, lv2Comm = 0, lv3Comm = 0;
                 let totalInvest = 0;
 
-                const getRefId = (u) => u.referrer || u.referrerId || u.parrainId || u.refCode;
+                // Fonction pour récupérer le code ou l'ID du parrain d'un utilisateur
+                const getRefValue = (u) => u.referrer || u.referrerId || u.parrainId || u.parrain;
 
-                if (allUsers) {
-                    for (let id in allUsers) {
-                        const user = allUsers[id];
-                        const userRef = getRefId(user);
-                        
-                        // Niveau 1
-                        if (userRef === userId || userRef === refCode) {
-                            lv1Count++;
-                            let invest = parseFloat(user.totalInvested || 0);
-                            totalInvest += invest;
-                            lv1Comm += invest * 0.25;
+                // Récupérer d'abord le refCode et les identifiants de l'utilisateur connecté
+                db.ref('users/' + userId).once('value').then(currentUserSnap => {
+                    const currentUser = currentUserSnap.val() || {};
+                    const myRefCode = currentUser.refCode;
+                    const myPhone = currentUser.phone;
 
-                            // Niveau 2
-                            for (let id2 in allUsers) {
-                                const user2 = allUsers[id2];
-                                const user2Ref = getRefId(user2);
-                                if (user2Ref === id || user2Ref === generate6LetterCode(id)) {
-                                    lv2Count++;
-                                    let invest2 = parseFloat(user2.totalInvested || 0);
-                                    totalInvest += invest2;
-                                    lv2Comm += invest2 * 0.03;
+                    if (allUsers) {
+                        for (let id in allUsers) {
+                            const user = allUsers[id];
+                            const refVal = getRefValue(user);
 
-                                    // Niveau 3
-                                    for (let id3 in allUsers) {
-                                        const user3 = allUsers[id3];
-                                        const user3Ref = getRefId(user3);
-                                        if (user3Ref === id2 || user3Ref === generate6LetterCode(id2)) {
-                                            lv3Count++;
-                                            let invest3 = parseFloat(user3.totalInvested || 0);
-                                            totalInvest += invest3;
-                                            lv3Comm += invest3 * 0.01;
+                            // Vérifie si le parrain correspond soit à l'ID, soit au téléphone, soit au refCode de l'utilisateur connecté
+                            const isLv1 = (refVal === userId || refVal === myPhone || (myRefCode && refVal === myRefCode));
+
+                            if (isLv1) {
+                                lv1Count++;
+                                let invest = parseFloat(user.totalInvested || 0);
+                                totalInvest += invest;
+                                lv1Comm += invest * 0.25; // 25%
+
+                                const subRefCode = user.refCode;
+                                const subPhone = user.phone;
+
+                                // Niveau 2
+                                for (let id2 in allUsers) {
+                                    const user2 = allUsers[id2];
+                                    const refVal2 = getRefValue(user2);
+                                    const isLv2 = (refVal2 === id || refVal2 === subPhone || (subRefCode && refVal2 === subRefCode));
+
+                                    if (isLv2) {
+                                        lv2Count++;
+                                        let invest2 = parseFloat(user2.totalInvested || 0);
+                                        totalInvest += invest2;
+                                        lv2Comm += invest2 * 0.03; // 3%
+
+                                        const subRefCode2 = user2.refCode;
+                                        const subPhone2 = user2.phone;
+
+                                        // Niveau 3
+                                        for (let id3 in allUsers) {
+                                            const user3 = allUsers[id3];
+                                            const refVal3 = getRefValue(user3);
+                                            const isLv3 = (refVal3 === id2 || refVal3 === subPhone2 || (subRefCode2 && refVal3 === subRefCode2));
+
+                                            if (isLv3) {
+                                                lv3Count++;
+                                                let invest3 = parseFloat(user3.totalInvested || 0);
+                                                totalInvest += invest3;
+                                                lv3Comm += invest3 * 0.01; // 1%
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                document.getElementById('team-size').innerText = (lv1Count + lv2Count + lv3Count) + " membre(s)";
-                document.getElementById('total-team-invest').innerText = totalInvest.toLocaleString('fr-FR') + " FC";
-                
-                document.getElementById('count-lv1').innerText = lv1Count;
-                document.getElementById('comm-lv1').innerText = lv1Comm.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
-                
-                document.getElementById('count-lv2').innerText = lv2Count;
-                document.getElementById('comm-lv2').innerText = lv2Comm.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
-                
-                document.getElementById('count-lv3').innerText = lv3Count;
-                document.getElementById('comm-lv3').innerText = lv3Comm.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
+                    document.getElementById('team-size').innerText = (lv1Count + lv2Count + lv3Count) + " membre(s)";
+                    document.getElementById('total-team-invest').innerText = totalInvest.toLocaleString('fr-FR') + " FC";
+                    
+                    document.getElementById('count-lv1').innerText = lv1Count;
+                    document.getElementById('comm-lv1').innerText = lv1Comm.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
+                    
+                    document.getElementById('count-lv2').innerText = lv2Count;
+                    document.getElementById('comm-lv2').innerText = lv2Comm.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
+                    
+                    document.getElementById('count-lv3').innerText = lv3Count;
+                    document.getElementById('comm-lv3').innerText = lv3Comm.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
+                });
             });
         } else {
             window.location.href = "index.html";

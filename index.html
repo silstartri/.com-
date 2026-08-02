@@ -194,52 +194,22 @@
             container.innerHTML = html;
         }
 
-        // Fonction universelle pour retrouver l'ID Firebase du parrain
-        async function findParentUserId(refValue) {
-            if (!refValue) return null;
-            try {
-                const directSnap = await db.ref('users/' + refValue).once('value');
-                if (directSnap.exists()) return refValue;
-
-                const allUsersSnap = await db.ref('users').once('value');
-                if (allUsersSnap.exists()) {
-                    const users = allUsersSnap.val();
-                    for (let key in users) {
-                        const u = users[key];
-                        if (u.refCode === refValue || u.phone === refValue || key.toLowerCase() === refValue.toLowerCase()) {
-                            return key;
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error("Erreur lors de la recherche du parrain :", error);
-            }
-            return null;
-        }
-
         // Fonction pour distribuer automatiquement les commissions de parrainage
         async function payReferralCommissions(purchaserData, productPrice) {
             const rates = [0.25, 0.03, 0.01]; // Lvl 1: 25%, Lvl 2: 3%, Lvl 3: 1%
-            
-            // Prend en charge tous les noms possibles sous lesquels le parrain a pu être enregistré
-            let currentRefValue = purchaserData.referrer || purchaserData.referrerId || purchaserData.parrainId || purchaserData.refCode || purchaserData.parrain;
+            let currentRefId = purchaserData.referrerId || purchaserData.parrainId;
 
             for (let level = 0; level < 3; level++) {
-                if (!currentRefValue) break; // Fin de la chaîne si pas de parrain
-
-                // Retrouver la vraie clé utilisateur Firebase
-                const currentRefId = await findParentUserId(currentRefValue);
-                if (!currentRefId) break;
+                if (!currentRefId) break; // Fin de la chaîne si pas de parrain
 
                 const refSnap = await db.ref('users/' + currentRefId).once('value');
                 const refUser = refSnap.val();
 
                 if (refUser) {
                     const commission = productPrice * rates[level];
-                    const newBalance = parseFloat(refUser.balance || 0) + commission;
-                    const newRefGains = parseFloat(refUser.refGains || 0) + commission;
+                    const newBalance = (refUser.balance || 0) + commission;
+                    const newRefGains = (refUser.refGains || 0) + commission;
 
-                    // Mise à jour du solde du parrain
                     await db.ref('users/' + currentRefId).update({
                         balance: newBalance,
                         refGains: newRefGains
@@ -254,7 +224,7 @@
                     });
 
                     // Passage au parrain supérieur (Niveau suivant)
-                    currentRefValue = refUser.referrer || refUser.referrerId || refUser.parrainId || refUser.refCode || refUser.parrain;
+                    currentRefId = refUser.referrerId || refUser.parrainId;
                 } else {
                     break;
                 }

@@ -5,23 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TRISTAR | Connexion</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         body { 
             font-family: 'Poppins', sans-serif; 
-            background-color: #e0f2fe; /* Bleu ciel très clair pour le fond */
+            background-color: #e0f2fe; 
             color: #333;
         }
 
         .logo-wrapper { text-align: center; margin-bottom: 30px; }
         .logo-container {
             display: inline-block;
-            background: #ffffff; /* Blanc */
+            background: #ffffff; 
             padding: 10px 20px;
-            border: 3px solid #0ea5e9; /* Bleu ciel */
+            border: 3px solid #0ea5e9; 
             border-radius: 8px;
             position: relative;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
@@ -39,13 +39,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #16a34a; /* Vert */
+            color: #16a34a; 
             font-size: 24px;
             font-weight: 900;
             border-radius: 5px 5px 0 0;
         }
         .main-text {
-            color: #0284c7; /* Bleu ciel foncé */
+            color: #0284c7; 
             font-size: 28px;
             letter-spacing: -0.5px;
             display: flex;
@@ -54,7 +54,7 @@
             font-weight: 900;
         }
         .slogan {
-            color: #16a34a; /* Vert */
+            color: #16a34a; 
             font-size: 11px;
             font-weight: 900;
             text-transform: uppercase;
@@ -69,7 +69,7 @@
             margin-bottom: 15px;
             display: flex;
             align-items: center;
-            border: 2px solid #7dd3fc; /* Bleu ciel doux */
+            border: 2px solid #7dd3fc; 
             transition: 0.3s;
         }
         .input-group:focus-within {
@@ -84,14 +84,14 @@
             font-size: 15px;
         }
         .input-group span {
-            color: #16a34a; /* Vert */
+            color: #16a34a; 
             font-weight: bold;
             margin-right: 10px;
             border-right: 1px solid #e5e7eb;
             padding-right: 10px;
         }
         .btn-login {
-            background-color: #0ea5e9; /* Bleu ciel principal pour contraster avec le vert de l'inscription */
+            background-color: #0ea5e9; 
             color: #ffffff;
             width: 100%;
             padding: 15px;
@@ -150,10 +150,21 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // Fonction pour générer un code de parrainage aléatoire à 6 lettres
+        function generateRefCode() {
+            const chars = 'abcdefghijklmnopqrstuvwxyz';
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const phone = document.getElementById('phone').value;
+            const rawPhone = document.getElementById('phone').value.trim();
+            const phone = rawPhone.replace(/\s+/g, '');
             const pin = document.getElementById('pin').value;
             const btn = document.getElementById('submitBtn');
 
@@ -166,9 +177,8 @@
             btn.innerText = "CONNEXION EN COURS...";
 
             // Recherche de l'utilisateur par numéro de téléphone
-            db.ref('users').orderByChild('phone').equalTo(phone).once('value', snapshot => {
+            db.ref('users').orderByChild('phone').equalTo(phone).once('value', async snapshot => {
                 if (snapshot.exists()) {
-                    // L'utilisateur existe, on vérifie le mot de passe
                     let userData = null;
                     let userId = null;
                     
@@ -178,21 +188,48 @@
                     });
 
                     if (userData.password === pin) {
-                        // Succès de la connexion
-                        localStorage.setItem('userId', userId);
-                        localStorage.setItem('userPhone', userData.phone);
-                        
-                        alert("Connexion réussie !");
-                        // Redirection vers la page d'accueil / tableau de bord
-                        window.location.href = "dashboard.html"; // Remplacez par le nom de votre page principale
+                        try {
+                            // MISE À JOUR AUTOMATIQUE DES ANCIENS UTILISATEURS
+                            let updates = {};
+                            let needsUpdate = false;
+
+                            // Si l'utilisateur n'a pas de code de parrainage à 6 lettres, on lui en crée un
+                            if (!userData.refCode) {
+                                updates.refCode = generateRefCode();
+                                needsUpdate = true;
+                            }
+                            // Si son userId dans les données ne correspond pas à sa clé ou au numéro
+                            if (!userData.userId) {
+                                updates.userId = phone;
+                                needsUpdate = true;
+                            }
+                            if (userData.refGains === undefined) {
+                                updates.refGains = 0;
+                                needsUpdate = true;
+                            }
+
+                            if (needsUpdate) {
+                                await db.ref('users/' + userId).update(updates);
+                            }
+
+                            // Enregistrement de la session dans le navigateur
+                            localStorage.setItem('userId', userId);
+                            localStorage.setItem('userPhone', userData.phone);
+                            
+                            alert("Connexion réussie !");
+                            window.location.href = "dashboard.html";
+                        } catch (err) {
+                            console.error(err);
+                            alert("Erreur lors de la mise à jour du profil.");
+                            btn.disabled = false;
+                            btn.innerText = "SE CONNECTER";
+                        }
                     } else {
-                        // Mot de passe incorrect
                         alert("Mot de passe incorrect.");
                         btn.disabled = false;
                         btn.innerText = "SE CONNECTER";
                     }
                 } else {
-                    // Numéro introuvable
                     alert("Ce numéro n'est pas enregistré. Veuillez vous inscrire.");
                     btn.disabled = false;
                     btn.innerText = "SE CONNECTER";
@@ -206,4 +243,3 @@
     </script>
 </body>
 </html>
-

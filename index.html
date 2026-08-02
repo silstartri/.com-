@@ -3,244 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRISTAR | Investir</title>
+    <title>TRISTAR | Connexion</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=400;600;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         body { 
-            background-color: #f0f9ff; 
             font-family: 'Poppins', sans-serif; 
-            padding-bottom: 100px; 
-            margin: 0; 
+            background-color: #e0f2fe; /* Bleu ciel très clair pour le fond */
             color: #333;
         }
-        .header-dark { 
-            background: #ffffff; 
-            color: #0284c7; 
-            padding: 20px 15px; 
-            border-bottom: 3px solid #7dd3fc; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+
+        .logo-wrapper { text-align: center; margin-bottom: 30px; }
+        .logo-container {
+            display: inline-block;
+            background: #ffffff; /* Blanc */
+            padding: 10px 20px;
+            border: 3px solid #0ea5e9; /* Bleu ciel */
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
-        .promo-box { 
-            background: white; 
-            border-radius: 30px; 
-            padding: 12px 20px; 
-            margin: 15px 15px 10px 15px; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.08); 
-            position: relative; 
-            z-index: 10; 
-            border: 1.5px solid #7dd3fc; 
+        .t-top {
+            background: #ffffff;
+            border: 3px solid #0ea5e9;
+            border-bottom: none;
+            width: 40px;
+            height: 40px;
+            position: absolute;
+            top: -38px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #16a34a; /* Vert */
+            font-size: 24px;
+            font-weight: 900;
+            border-radius: 5px 5px 0 0;
         }
-        .vip-card { 
-            background: white; 
-            border-radius: 20px; 
-            margin: 15px; 
-            padding: 18px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.04); 
-            border: 2px solid #7dd3fc; 
+        .main-text {
+            color: #0284c7; /* Bleu ciel foncé */
+            font-size: 28px;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 900;
         }
-        .product-img { 
-            width: 100%; 
-            height: 200px; 
-            object-fit: cover; 
-            border-radius: 15px; 
-            margin: 12px 0; 
-            background: #f8fafc; 
-            border: 1px solid #e2e8f0;
+        .slogan {
+            color: #16a34a; /* Vert */
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-top: 8px;
+            letter-spacing: 1.5px;
         }
-        .price-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 12px; 
-            margin-top: 12px; 
-            border-top: 1px solid #f1f5f9; 
-            padding-top: 12px; 
+
+        .input-group {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            border: 2px solid #7dd3fc; /* Bleu ciel doux */
+            transition: 0.3s;
         }
-        .label-gray { 
-            font-size: 11px; 
-            color: #64748b; 
-            text-transform: uppercase; 
-            font-weight: 700; 
+        .input-group:focus-within {
+            border-color: #0ea5e9;
         }
-        .val-bold { 
-            font-size: 15px; 
-            font-weight: 800; 
-            color: #0f172a; 
+        .input-group input {
+            background: transparent;
+            border: none;
+            width: 100%;
+            color: #333;
+            outline: none;
+            font-size: 15px;
         }
-        .buy-btn { 
-            background: #22c55e; 
-            color: #ffffff; 
-            border-radius: 30px; 
-            padding: 14px; 
-            width: 100%; 
-            font-weight: 900; 
-            margin-top: 15px; 
-            border: none; 
-            transition: 0.3s; 
-            text-transform: uppercase; 
-            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); 
+        .input-group span {
+            color: #16a34a; /* Vert */
+            font-weight: bold;
+            margin-right: 10px;
+            border-right: 1px solid #e5e7eb;
+            padding-right: 10px;
+        }
+        .btn-login {
+            background-color: #0ea5e9; /* Bleu ciel principal pour contraster avec le vert de l'inscription */
+            color: #ffffff;
+            width: 100%;
+            padding: 15px;
+            border-radius: 50px;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+            transition: 0.3s;
+            border: none;
             cursor: pointer;
         }
-        .buy-btn:active { transform: scale(0.96); }
-        .buy-btn:disabled { background: #9ca3af; box-shadow: none; cursor: not-allowed; }
-        
-        .bottom-nav { 
-            position: fixed; 
-            bottom: 0; 
-            width: 100%; 
-            background: white; 
-            display: flex; 
-            justify-content: space-around; 
-            padding: 10px 0; 
-            border-top: 1px solid #e2e8f0; 
-            z-index: 1000; 
-        }
-        .nav-item { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            font-size: 11px; 
-            color: #94a3b8; 
-            text-decoration: none; 
-            font-weight: 600; 
-        }
-        .nav-item.active { color: #0284c7; font-weight: 800; }
-        .nav-icon-circle { 
-            width: 26px; 
-            height: 26px; 
-            border: 2px solid #94a3b8; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            margin-bottom: 2px; 
-            font-size: 12px; 
-        }
-        .active .nav-icon-circle { 
-            border-color: #0ea5e9; 
-            background-color: #22c55e; 
-            color: white; 
-        }
+        .btn-login:active { transform: scale(0.98); }
+        .btn-login:disabled { background-color: #7dd3fc; cursor: not-allowed; }
     </style>
 </head>
-<body>
+<body class="flex items-center justify-center min-h-screen p-6">
 
-    <div class="header-dark text-center">
-        <h1 class="text-2xl font-black italic tracking-wider flex items-center justify-center gap-2">
-            TRISTAR <i class="fa-solid fa-star text-xl text-[#22c55e]"></i>
-        </h1>
-    </div>
+    <div class="w-full max-w-sm">
+        <div class="logo-wrapper">
+            <div class="logo-container">
+                <div class="t-top">T</div>
+                <div class="main-text">
+                    TRISTAR <i class="fa-solid fa-star text-xl text-[#22c55e]"></i>
+                </div>
+            </div>
+            <div class="slogan">L'Élite des Investisseurs</div>
+        </div>
 
-    <div class="promo-box">
-        <i class="fas fa-bullhorn text-[#22c55e] text-lg"></i>
-        <marquee class="text-xs font-bold text-slate-700">Commissions d'équipe : Niveau 1: 30% | Niveau 2: 2% | Niveau 3: 1%</marquee>
-    </div>
+        <p class="text-center mb-8 font-bold text-lg tracking-wider text-[#0284c7]">CONNEXION</p>
 
-    <p class="text-center text-slate-400 font-bold text-xs my-6 uppercase tracking-widest">- - - Équipements Tristar (Fers à repasser) - - -</p>
+        <form id="loginForm">
+            <div class="input-group">
+                <span>+243</span>
+                <input type="tel" id="phone" placeholder="Numéro de téléphone" required>
+            </div>
 
-    <div id="vip-list"></div>
+            <div class="input-group">
+                <input type="password" id="pin" placeholder="Mot de passe (6 chiffres)" inputmode="numeric" maxlength="6" required>
+            </div>
 
-    <div class="bottom-nav">
-        <a href="dashboard.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-redo-alt"></i></div><span>Commencer</span></a>
-        <a href="investir.html" class="nav-item active"><div class="nav-icon-circle"><i class="fas fa-tasks"></i></div><span>Investir</span></a>
-        <a href="gains.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-chart-line"></i></div><span>Gains</span></a>
-        <a href="agent.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-paper-plane"></i></div><span>Agent</span></a>
-        <a href="profil.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-ellipsis-h"></i></div><span>Profil</span></a>
+            <button type="submit" id="submitBtn" class="btn-login">SE CONNECTER</button>
+        </form>
+
+        <div class="mt-8 text-center">
+            <p class="text-slate-600">Pas encore membre ? <a href="register.html" class="font-bold text-[#16a34a] underline">Inscrivez-vous ici</a></p>
+        </div>
     </div>
 
     <script>
-        const firebaseConfig = { databaseURL: "https://firstsolar-e2ba3-default-rtdb.firebaseio.com/" };
+        // CONFIGURATION FIREBASE
+        const firebaseConfig = {
+            databaseURL: "https://firstsolar-e2ba3-default-rtdb.firebaseio.com/"
+        };
+        
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const userId = localStorage.getItem('userId');
 
-        // Intégration des 7 nouvelles images de fers à repasser
-        const vips = [
-            { id: 1, name: "TRISTAR VIP 1", price: 10000, daily: 1818, duration: 60, img: "IMG_6993.jpeg" },
-            { id: 2, name: "TRISTAR VIP 2", price: 35000, daily: 6603, duration: 60, img: "IMG_6986.jpeg" },
-            { id: 3, name: "TRISTAR VIP 3", price: 90000, daily: 17647, duration: 90, img: "IMG_6987.jpeg" },
-            { id: 4, name: "TRISTAR VIP 4", price: 280000, daily: 56000, duration: 90, img: "IMG_6988.jpeg" },
-            { id: 5, name: "TRISTAR VIP 5", price: 850000, daily: 180851, duration: 90, img: "IMG_6989.jpeg" },
-            { id: 6, name: "TRISTAR VIP 6", price: 2500000, daily: 555535, duration: 90, img: "IMG_6990.jpeg" },
-            { id: 7, name: "TRISTAR VIP 7", price: 4000000, daily: 952380, duration: 90, img: "IMG_6991.jpeg" }
-        ];
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const phone = document.getElementById('phone').value;
+            const pin = document.getElementById('pin').value;
+            const btn = document.getElementById('submitBtn');
 
-        function displayProducts() {
-            const container = document.getElementById('vip-list');
-            let html = '';
-            vips.forEach(p => {
-                html += `
-                <div class="vip-card">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-black text-[#0284c7]">${p.name}</h2>
-                        <span style="color:#16a34a; font-size:10px; font-weight:800; background:#dcfce7; padding:4px 10px; border-radius:12px;">GARANTI 100%</span>
-                    </div>
-                    <img src="${p.img}" class="product-img" alt="${p.name}">
-                    <div class="price-grid">
-                        <div><p class="val-bold text-[#22c55e]">${p.price.toLocaleString('fr-FR')} FC</p><p class="label-gray">Prix d'achat</p></div>
-                        <div><p class="val-bold text-[#0284c7]">${p.daily.toLocaleString('fr-FR')} FC</p><p class="label-gray">Revenu journalier</p></div>
-                        <div><p class="val-bold text-[#0284c7]">${p.duration} Jrs</p><p class="label-gray">Durée de cycle</p></div>
-                        <div><p class="val-bold text-[#0284c7]">${(p.price * p.duration).toLocaleString('fr-FR')} FC</p><p class="label-gray">Revenu total</p></div>
-                    </div>
-                    <button onclick="handlePurchase(${p.id})" class="buy-btn" id="btn-${p.id}">Acheter</button>
-                </div>`;
-            });
-            container.innerHTML = html;
-        }
-
-        window.handlePurchase = async (id) => {
-            if (!userId) {
-                alert("Veuillez vous connecter d'abord.");
-                window.location.href = "index.html";
+            if (pin.length !== 6) {
+                alert("Le mot de passe doit contenir exactement 6 chiffres.");
                 return;
             }
 
-            const vip = vips.find(v => v.id === id);
-            const btn = document.getElementById(`btn-${id}`);
             btn.disabled = true;
-            btn.innerText = "TRAITEMENT...";
+            btn.innerText = "CONNEXION EN COURS...";
 
-            try {
-                const userRef = db.ref('users/' + userId);
-                const snapshot = await userRef.once('value');
-                const userData = snapshot.val();
-                const currentBalance = userData ? (userData.balance || 0) : 0;
-
-                if (currentBalance >= vip.price) {
-                    await userRef.update({
-                        balance: currentBalance - vip.price,
-                        canWithdraw: true 
+            // Recherche de l'utilisateur par numéro de téléphone
+            db.ref('users').orderByChild('phone').equalTo(phone).once('value', snapshot => {
+                if (snapshot.exists()) {
+                    // L'utilisateur existe, on vérifie le mot de passe
+                    let userData = null;
+                    let userId = null;
+                    
+                    snapshot.forEach(childSnapshot => {
+                        userId = childSnapshot.key;
+                        userData = childSnapshot.val();
                     });
 
-                    await db.ref('users/' + userId + '/myProducts').push({
-                        name: vip.name,
-                        daily: vip.daily,
-                        image: vip.img,
-                        purchaseDate: new Date().toISOString(),
-                        lastCollectTime: new Date().getTime()
-                    });
-
-                    alert("Achat effectué avec succès ! Vos revenus seront générés toutes les 24 heures.");
-                    window.location.href = "gains.html";
+                    if (userData.password === pin) {
+                        // Succès de la connexion
+                        localStorage.setItem('userId', userId);
+                        localStorage.setItem('userPhone', userData.phone);
+                        
+                        alert("Connexion réussie !");
+                        // Redirection vers la page d'accueil / tableau de bord
+                        window.location.href = "dashboard.html"; // Remplacez par le nom de votre page principale
+                    } else {
+                        // Mot de passe incorrect
+                        alert("Mot de passe incorrect.");
+                        btn.disabled = false;
+                        btn.innerText = "SE CONNECTER";
+                    }
                 } else {
-                    alert("Solde insuffisant pour procéder à cet achat.");
+                    // Numéro introuvable
+                    alert("Ce numéro n'est pas enregistré. Veuillez vous inscrire.");
                     btn.disabled = false;
-                    btn.innerText = "Acheter";
+                    btn.innerText = "SE CONNECTER";
                 }
-            } catch (error) {
-                alert("Erreur de connexion au serveur. Réessayez.");
+            }).catch(error => {
+                alert("Erreur de connexion: " + error.message);
                 btn.disabled = false;
-                btn.innerText = "Acheter";
-            }
-        };
-
-        displayProducts();
+                btn.innerText = "SE CONNECTER";
+            });
+        });
     </script>
 </body>
 </html>
+

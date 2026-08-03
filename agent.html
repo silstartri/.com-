@@ -1,3 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Équipe & Agent</title>
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+    <div style="padding: 20px; font-family: Arial, sans-serif;">
+        <h2>Mon Équipe</h2>
+        <p><strong>Lien d'invitation :</strong> <span id="invite-link">Chargement...</span> <button onclick="copyLink()">Copier</button></p>
+        <p>Taille totale de l'équipe : <span id="team-size">0 membre(s)</span></p>
+        <p>Investissement de l'équipe : <span id="total-team-invest">0 FC</span></p>
+
+        <hr>
+        <h3>Niveau 1 (Direct) - 25%</h3>
+        <p>Membres inscrits : <span id="count-lv1">0</span></p>
+        <p>Commissions estimées : <span id="comm-lv1">0,00 FC</span></p>
+
+        <h3>Niveau 2 (Indirect) - 3%</h3>
+        <p>Membres inscrits : <span id="count-lv2">0</span></p>
+        <p>Commissions estimées : <span id="comm-lv2">0,00 FC</span></p>
+
+        <h3>Niveau 3 (Indirect) - 1%</h3>
+        <p>Membres inscrits : <span id="count-lv3">0</span></p>
+        <p>Commissions estimées : <span id="comm-lv3">0,00 FC</span></p>
+    </div>
+
     <script>
         const firebaseConfig = { databaseURL: "https://firstsolar-e2ba3-default-rtdb.firebaseio.com/" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -14,103 +46,75 @@
                 const myRefCode = currentUserData.refCode || '';
                 const myPhone = currentUserData.phone || '';
                 
+                // Mettre à jour le lien d'invitation avec le refCode si disponible, sinon l'ID
                 const inviteCodeToUse = myRefCode || userId;
-                document.getElementById('invite-link').innerText = `${platformLink}?ref=${inviteCodeToUse}`;
+                const linkElem = document.getElementById('invite-link');
+                if (linkElem) linkElem.innerText = `${platformLink}?ref=${inviteCodeToUse}`;
 
+                // Écouter toute la base pour calculer l'équipe et les commissions en temps réel
                 db.ref('users').on('value', (usersSnapshot) => {
-                    const allUsers = usersSnapshot.val();
+                    const allUsers = usersSnapshot.val() || {};
                     let lv1Count = 0, lv2Count = 0, lv3Count = 0;
                     let lv1Comm = 0, lv2Comm = 0, lv3Comm = 0;
                     let totalInvest = 0;
 
+                    // Fonction robuste pour vérifier si un utilisateur a pour parrain une des clés de l'agent
                     const isMyReferral = (u, targetId, targetRefCode, targetPhone) => {
+                        if (!u) return false;
                         const ref = u.referrer || u.referrerId || u.parrainId || '';
                         if (!ref) return false;
                         return ref === targetId || (targetRefCode && ref === targetRefCode) || (targetPhone && ref === targetPhone);
                     };
 
-                    // Fonction pour calculer l'investissement total d'un utilisateur en vérifiant 'myProducts' ou les champs classiques
+                    // Fonction pour calculer l'investissement total (champ direct + produits dans myProducts)
                     const getUserInvest = (u) => {
+                        if (!u) return 0;
                         let inv = parseFloat(u.totalInvested || u.investedAmount || u.montantInvesti || u.montant || 0);
                         
-                        // Si un dossier myProducts existe, on additionne les valeurs ou on cherche un prix/montant à l'intérieur
-                        if (u.myProducts) {
+                        if (u.myProducts && typeof u.myProducts === 'object') {
                             for (let prodId in u.myProducts) {
                                 const prod = u.myProducts[prodId];
-                                // Si le produit contient un prix, un montant ou une valeur d'investissement
-                                let prodPrice = parseFloat(prod.price || prod.montant || prod.amount || 0);
-                                
-                                // Si aucun prix n'est explicite dans le produit mais qu'on veut estimer selon le nom (ex: TRISTAR VIP 3)
-                                if (prodPrice === 0 && prod.name) {
-                                    // Tu peux adapter selon tes prix de VIP, ou si le produit stocke son prix. 
-                                    // Si le produit ne stocke que 'daily', on peut aussi regarder si un champ 'price' ou 'invest' y figure.
+                                if (prod) {
+                                    let prodPrice = parseFloat(prod.price || prod.amount || prod.cost || prod.montant || 0);
+                                    inv += prodPrice;
                                 }
-                                inv += prodPrice;
                             }
                         }
-                        
-                        // Si tes scripts d'achat enregistrent l'investissement ailleurs, on s'assure de récupérer le montant global
                         return inv;
                     };
 
                     if (allUsers) {
+                        // Trouver tous les filleuls de Niveau 1
                         for (let id1 in allUsers) {
                             const user1 = allUsers[id1];
                             
                             if (isMyReferral(user1, userId, myRefCode, myPhone)) {
                                 lv1Count++;
-                                
-                                // Alternative directe : si l'achat met à jour un champ ou si on extrait le montant des produits
-                                // Regardons aussi si le produit a un coût enregistré ou si l'on doit sommer les prix.
-                                let invest1 = 0;
-                                if (user1.myProducts) {
-                                    for (let pId in user1.myProducts) {
-                                        let p = user1.myProducts[pId];
-                                        // Si tu stockes le prix d'achat dans le produit (ex: price, cost, amount)
-                                        invest1 += parseFloat(p.price || p.amount || p.cost || 0);
-                                    }
-                                }
-                                // S'il y a un champ global d'investissement en plus
-                                invest1 += parseFloat(user1.totalInvested || user1.investedAmount || 0);
-
+                                let invest1 = getUserInvest(user1);
                                 totalInvest += invest1;
                                 lv1Comm += invest1 * 0.25; // 25%
 
                                 const u1RefCode = user1.refCode || '';
                                 const u1Phone = user1.phone || '';
 
+                                // Niveau 2 (parrains par rapport à user1)
                                 for (let id2 in allUsers) {
                                     const user2 = allUsers[id2];
                                     if (isMyReferral(user2, id1, u1RefCode, u1Phone)) {
                                         lv2Count++;
-                                        let invest2 = 0;
-                                        if (user2.myProducts) {
-                                            for (let pId2 in user2.myProducts) {
-                                                let p2 = user2.myProducts[pId2];
-                                                invest2 += parseFloat(p2.price || p2.amount || p2.cost || 0);
-                                            }
-                                        }
-                                        invest2 += parseFloat(user2.totalInvested || user2.investedAmount || 0);
-
+                                        let invest2 = getUserInvest(user2);
                                         totalInvest += invest2;
                                         lv2Comm += invest2 * 0.03; // 3%
 
                                         const u2RefCode = user2.refCode || '';
                                         const u2Phone = user2.phone || '';
 
+                                        // Niveau 3 (parrains par rapport à user2)
                                         for (let id3 in allUsers) {
                                             const user3 = allUsers[id3];
                                             if (isMyReferral(user3, id2, u2RefCode, u2Phone)) {
                                                 lv3Count++;
-                                                let invest3 = 0;
-                                                if (user3.myProducts) {
-                                                    for (let pId3 in user3.myProducts) {
-                                                        let p3 = user3.myProducts[pId3];
-                                                        invest3 += parseFloat(p3.price || p3.amount || p3.cost || 0);
-                                                    }
-                                                }
-                                                invest3 += parseFloat(user3.totalInvested || user3.investedAmount || 0);
-
+                                                let invest3 = getUserInvest(user3);
                                                 totalInvest += invest3;
                                                 lv3Comm += invest3 * 0.01; // 1%
                                             }
@@ -121,18 +125,36 @@
                         }
                     }
 
-                    // Mise à jour de l'interface
-                    document.getElementById('team-size').innerText = (lv1Count + lv2Count + lv3Count) + " membre(s)";
-                    document.getElementById('total-team-invest').innerText = totalInvest.toLocaleString('fr-FR') + " FC";
+                    // Calcul de la commission totale de l'équipe
+                    let totalTeamCommission = lv1Comm + lv2Comm + lv3Comm;
+
+                    // Mise à jour sécurisée de l'interface
+                    const teamSizeElem = document.getElementById('team-size');
+                    if (teamSizeElem) teamSizeElem.innerText = (lv1Count + lv2Count + lv3Count) + " membre(s)";
+
+                    const totalInvestElem = document.getElementById('total-team-invest');
+                    if (totalInvestElem) totalInvestElem.innerText = totalInvest.toLocaleString('fr-FR') + " FC";
                     
-                    document.getElementById('count-lv1').innerText = lv1Count;
-                    document.getElementById('comm-lv1').innerText = lv1Comm.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
+                    const totalCommElement = document.getElementById('total-team-comm');
+                    if (totalCommElement) {
+                        totalCommElement.innerText = totalTeamCommission.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
+                    }
+
+                    // Mise à jour par niveau
+                    const c1 = document.getElementById('count-lv1');
+                    if (c1) c1.innerText = lv1Count;
+                    const m1 = document.getElementById('comm-lv1');
+                    if (m1) m1.innerText = lv1Comm.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
                     
-                    document.getElementById('count-lv2').innerText = lv2Count;
-                    document.getElementById('comm-lv2').innerText = lv2Comm.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
+                    const c2 = document.getElementById('count-lv2');
+                    if (c2) c2.innerText = lv2Count;
+                    const m2 = document.getElementById('comm-lv2');
+                    if (m2) m2.innerText = lv2Comm.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
                     
-                    document.getElementById('count-lv3').innerText = lv3Count;
-                    document.getElementById('comm-lv3').innerText = lv3Comm.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
+                    const c3 = document.getElementById('count-lv3');
+                    if (c3) c3.innerText = lv3Count;
+                    const m3 = document.getElementById('comm-lv3');
+                    if (m3) m3.innerText = lv3Comm.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " FC";
                 });
             });
         } else {
@@ -140,7 +162,9 @@
         }
 
         function copyLink() {
-            const link = document.getElementById('invite-link').innerText;
+            const linkElem = document.getElementById('invite-link');
+            if (!linkElem) return;
+            const link = linkElem.innerText;
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(link).then(() => {
                     alert("Lien d'invitation copié !");
@@ -160,3 +184,5 @@
             alert("Lien d'invitation copié !");
         }
     </script>
+</body>
+</html>

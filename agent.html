@@ -1,361 +1,116 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRISTAR | Agent</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <style>
-        body { 
-            background-color: #f0f9ff; 
-            font-family: 'Poppins', sans-serif; 
-            padding-bottom: 100px; 
-            margin: 0; 
-            color: #333;
-        }
-        .banner { 
-            background: linear-gradient(135deg, #0284c7, #22c55e); 
-            color: white; 
-            padding: 25px 20px; 
-            position: relative; 
-            overflow: hidden; 
-            border-bottom: 3px solid #7dd3fc; 
-            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
-        }
-        .banner h2 { 
-            font-size: 22px; 
-            font-weight: 900; 
-            line-height: 1.2; 
-            text-transform: uppercase; 
-            text-shadow: 1px 1px 4px rgba(0,0,0,0.2); 
-        }
-        .banner p { 
-            font-size: 13px; 
-            font-weight: 600; 
-            opacity: 0.95; 
-            margin-top: 5px; 
-            color: #ffffff; 
-        }
-        .stats-summary { 
-            background: white; 
-            padding: 18px; 
-            margin: 15px; 
-            border-radius: 16px; 
-            border: 2px solid #7dd3fc; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-        }
-        .stats-row { 
-            display: flex; 
-            justify-content: space-between; 
-            margin-bottom: 8px; 
-            font-size: 13px; 
-        }
-        .stats-label { 
-            font-weight: 700; 
-            color: #64748b; 
-        }
-        .stats-value { 
-            font-weight: 900; 
-            color: #0284c7; 
-        }
-        .stats-note { 
-            font-size: 10px; 
-            color: #94a3b8; 
-            margin-top: 8px; 
-            font-weight: 600; 
-            text-align: center;
-        }
-        .invite-card { 
-            background: white; 
-            margin: 15px; 
-            border-radius: 20px; 
-            padding: 18px; 
-            border: 2px solid #7dd3fc; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
-        }
-        .invite-header { 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-            font-weight: 800; 
-            color: #0284c7; 
-            margin-bottom: 12px; 
-            font-size: 14px;
-        }
-        .link-container { 
-            background: #f8fafc; 
-            border: 1.5px solid #e2e8f0; 
-            border-radius: 12px; 
-            padding: 14px; 
-            position: relative; 
-        }
-        .link-text { 
-            font-size: 12px; 
-            color: #475569; 
-            word-break: break-all; 
-            padding-right: 80px; 
-            font-weight: 700; 
-        }
-        .copy-btn { 
-            position: absolute; 
-            right: 8px; 
-            top: 50%; 
-            transform: translateY(-50%); 
-            background: #22c55e; 
-            color: white; 
-            border: none; 
-            padding: 8px 14px; 
-            border-radius: 20px; 
-            font-size: 11px; 
-            font-weight: 900; 
-            cursor: pointer; 
-            text-transform: uppercase; 
-            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3); 
-            transition: 0.2s;
-        }
-        .copy-btn:active { transform: translateY(-50%) scale(0.95); }
-        
-        .level-card { 
-            background: white; 
-            margin: 12px 15px; 
-            border-radius: 16px; 
-            padding: 16px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03); 
-            border: 1px solid #e2e8f0;
-        }
-        .level-card.lv1 { border-left: 5px solid #22c55e; }
-        .level-card.lv2 { border-left: 5px solid #0284c7; }
-        .level-card.lv3 { border-left: 5px solid #f59e0b; }
-
-        .level-header { 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            padding-bottom: 10px; 
-            border-bottom: 1px solid #f1f5f9; 
-            margin-bottom: 10px; 
-        }
-        .level-title { 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            font-weight: 800; 
-            font-size: 15px; 
-            color: #0f172a;
-        }
-        .comm-rate { 
-            font-weight: 900; 
-            font-size: 12px; 
-        }
-        .row-data { 
-            display: flex; 
-            justify-content: space-between; 
-            font-size: 12px; 
-            color: #64748b; 
-            margin-bottom: 6px; 
-            font-weight: 600;
-        }
-        .val-black { 
-            color: #0f172a; 
-            font-weight: 800; 
-        }
-        
-        .bottom-nav { 
-            position: fixed; 
-            bottom: 0; 
-            width: 100%; 
-            background: white; 
-            display: flex; 
-            justify-content: space-around; 
-            padding: 10px 0; 
-            border-top: 1px solid #e2e8f0; 
-            z-index: 1000; 
-        }
-        .nav-item { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            font-size: 11px; 
-            color: #94a3b8; 
-            text-decoration: none; 
-            font-weight: 600; 
-        }
-        .nav-item.active { 
-            color: #0284c7; 
-            font-weight: 800; 
-        }
-        .nav-icon-circle { 
-            width: 26px; 
-            height: 26px; 
-            border: 2px solid #94a3b8; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            margin-bottom: 2px; 
-            font-size: 12px; 
-        }
-        .active .nav-icon-circle { 
-            border-color: #0ea5e9; 
-            background-color: #22c55e; 
-            color: white; 
-        }
-    </style>
-</head>
-<body>
-
-    <div class="banner">
-        <h2>Invitez des amis et<br>gagnez de l'argent !</h2>
-        <p>Partagez votre lien et recevez jusqu'à 25%<br>de commissions sur votre équipe !</p>
-    </div>
-
-    <div class="stats-summary">
-        <div class="stats-row">
-            <span class="stats-label">Investissement de l'équipe :</span>
-            <span id="total-team-invest" class="stats-value">0 FC</span>
-        </div>
-        <div class="stats-row">
-            <span class="stats-label">Taille totale de l'équipe :</span>
-            <span id="team-size" class="text-emerald-600 font-black">0 membre(s)</span>
-        </div>
-        <p class="stats-note"><i class="fas fa-info-circle mr-1"></i> Les commissions sont créditées instantanément lors de chaque achat.</p>
-    </div>
-
-    <div class="invite-card">
-        <div class="invite-header">
-            <i class="fas fa-link text-[#22c55e]"></i>
-            <span>Votre lien d'invitation exclusif</span>
-        </div>
-        <div class="link-container">
-            <div id="invite-link" class="link-text">Chargement du lien...</div>
-            <button onclick="copyLink()" class="copy-btn"><i class="fas fa-copy mr-1"></i> Copier</button>
-        </div>
-    </div>
-
-    <div class="level-card lv1">
-        <div class="level-header">
-            <div class="level-title">
-                <span class="bg-emerald-500 text-white font-black w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span> 
-                Niveau 1 (Direct)
-            </div>
-            <span class="comm-rate text-emerald-600">Commission de 25%</span>
-        </div>
-        <div class="row-data"><span>Commissions estimées</span><span id="comm-lv1" class="val-black text-emerald-600">0,00 FC</span></div>
-        <div class="row-data"><span>Membres inscrits</span><span id="count-lv1" class="val-black">0</span></div>
-    </div>
-
-    <div class="level-card lv2">
-        <div class="level-header">
-            <div class="level-title">
-                <span class="bg-sky-500 text-white font-black w-6 h-6 rounded-full flex items-center justify-center text-xs">2</span> 
-                Niveau 2 (Indirect)
-            </div>
-            <span class="comm-rate text-sky-600">Commission de 3%</span>
-        </div>
-        <div class="row-data"><span>Commissions estimées</span><span id="comm-lv2" class="val-black text-sky-600">0,00 FC</span></div>
-        <div class="row-data"><span>Membres inscrits</span><span id="count-lv2" class="val-black">0</span></div>
-    </div>
-
-    <div class="level-card lv3">
-        <div class="level-header">
-            <div class="level-title">
-                <span class="bg-amber-500 text-white font-black w-6 h-6 rounded-full flex items-center justify-center text-xs">3</span> 
-                Niveau 3 (Subordonné)
-            </div>
-            <span class="comm-rate text-amber-500">Commission de 1%</span>
-        </div>
-        <div class="row-data"><span>Commissions estimées</span><span id="comm-lv3" class="val-black text-amber-500">0,00 FC</span></div>
-        <div class="row-data"><span>Membres inscrits</span><span id="count-lv3" class="val-black">0</span></div>
-    </div>
-
-    <div class="bottom-nav">
-        <a href="dashboard.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-redo-alt"></i></div><span>Commencer</span></a>
-        <a href="investir.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-tasks"></i></div><span>Investir</span></a>
-        <a href="gains.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-chart-line"></i></div><span>Gains</span></a>
-        <a href="agent.html" class="nav-item active"><div class="nav-icon-circle"><i class="fas fa-paper-plane"></i></div><span>Agent</span></a>
-        <a href="profil.html" class="nav-item"><div class="nav-icon-circle"><i class="fas fa-ellipsis-h"></i></div><span>Profil</span></a>
-    </div>
-
     <script>
         const firebaseConfig = { databaseURL: "https://firstsolar-e2ba3-default-rtdb.firebaseio.com/" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const userId = localStorage.getItem('userId');
         
-        // Obtenir l'URL de base dynamique
+        // Obtenir l'URL de base dynamique pour s'adapter au domaine GitHub Pages
         const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
         const platformLink = `${baseUrl}/register.html`;
 
         if (userId) {
-            // Récupérer les informations de l'utilisateur connecté pour afficher son VRAI refCode à 6 lettres
-            db.ref('users/' + userId).once('value').then(snapshot => {
-                const userData = snapshot.val();
-                if (userData) {
-                    const userRefCode = userData.refCode || userId;
-                    document.getElementById('invite-link').innerText = `${platformLink}?ref=${userRefCode}`;
-                }
-            });
+            db.ref('users').child(userId).once('value').then((snapshot) => {
+                const currentUserData = snapshot.val() || {};
+                const myRefCode = currentUserData.refCode || '';
+                const myPhone = currentUserData.phone || '';
+                
+                const inviteCodeToUse = myRefCode || userId;
+                document.getElementById('invite-link').innerText = `${platformLink}?ref=${inviteCodeToUse}`;
 
-            db.ref('users').on('value', (snapshot) => {
-                const allUsers = snapshot.val();
-                let lv1Count = 0, lv2Count = 0, lv3Count = 0;
-                let lv1Comm = 0, lv2Comm = 0, lv3Comm = 0;
-                let totalInvest = 0;
+                db.ref('users').on('value', (usersSnapshot) => {
+                    const allUsers = usersSnapshot.val();
+                    let lv1Count = 0, lv2Count = 0, lv3Count = 0;
+                    let lv1Comm = 0, lv2Comm = 0, lv3Comm = 0;
+                    let totalInvest = 0;
 
-                // Fonction pour récupérer le code ou l'ID du parrain d'un utilisateur
-                const getRefValue = (u) => u.referrer || u.referrerId || u.parrainId || u.parrain;
+                    const isMyReferral = (u, targetId, targetRefCode, targetPhone) => {
+                        const ref = u.referrer || u.referrerId || u.parrainId || '';
+                        if (!ref) return false;
+                        return ref === targetId || (targetRefCode && ref === targetRefCode) || (targetPhone && ref === targetPhone);
+                    };
 
-                // Récupérer d'abord le refCode et les identifiants de l'utilisateur connecté
-                db.ref('users/' + userId).once('value').then(currentUserSnap => {
-                    const currentUser = currentUserSnap.val() || {};
-                    const myRefCode = currentUser.refCode;
-                    const myPhone = currentUser.phone;
+                    // Fonction pour calculer l'investissement total d'un utilisateur en vérifiant 'myProducts' ou les champs classiques
+                    const getUserInvest = (u) => {
+                        let inv = parseFloat(u.totalInvested || u.investedAmount || u.montantInvesti || u.montant || 0);
+                        
+                        // Si un dossier myProducts existe, on additionne les valeurs ou on cherche un prix/montant à l'intérieur
+                        if (u.myProducts) {
+                            for (let prodId in u.myProducts) {
+                                const prod = u.myProducts[prodId];
+                                // Si le produit contient un prix, un montant ou une valeur d'investissement
+                                let prodPrice = parseFloat(prod.price || prod.montant || prod.amount || 0);
+                                
+                                // Si aucun prix n'est explicite dans le produit mais qu'on veut estimer selon le nom (ex: TRISTAR VIP 3)
+                                if (prodPrice === 0 && prod.name) {
+                                    // Tu peux adapter selon tes prix de VIP, ou si le produit stocke son prix. 
+                                    // Si le produit ne stocke que 'daily', on peut aussi regarder si un champ 'price' ou 'invest' y figure.
+                                }
+                                inv += prodPrice;
+                            }
+                        }
+                        
+                        // Si tes scripts d'achat enregistrent l'investissement ailleurs, on s'assure de récupérer le montant global
+                        return inv;
+                    };
 
                     if (allUsers) {
-                        for (let id in allUsers) {
-                            const user = allUsers[id];
-                            const refVal = getRefValue(user);
-
-                            // Vérifie si le parrain correspond soit à l'ID, soit au téléphone, soit au refCode de l'utilisateur connecté
-                            const isLv1 = (refVal === userId || refVal === myPhone || (myRefCode && refVal === myRefCode));
-
-                            if (isLv1) {
+                        for (let id1 in allUsers) {
+                            const user1 = allUsers[id1];
+                            
+                            if (isMyReferral(user1, userId, myRefCode, myPhone)) {
                                 lv1Count++;
-                                let invest = parseFloat(user.totalInvested || 0);
-                                totalInvest += invest;
-                                lv1Comm += invest * 0.25; // 25%
+                                
+                                // Alternative directe : si l'achat met à jour un champ ou si on extrait le montant des produits
+                                // Regardons aussi si le produit a un coût enregistré ou si l'on doit sommer les prix.
+                                let invest1 = 0;
+                                if (user1.myProducts) {
+                                    for (let pId in user1.myProducts) {
+                                        let p = user1.myProducts[pId];
+                                        // Si tu stockes le prix d'achat dans le produit (ex: price, cost, amount)
+                                        invest1 += parseFloat(p.price || p.amount || p.cost || 0);
+                                    }
+                                }
+                                // S'il y a un champ global d'investissement en plus
+                                invest1 += parseFloat(user1.totalInvested || user1.investedAmount || 0);
 
-                                const subRefCode = user.refCode;
-                                const subPhone = user.phone;
+                                totalInvest += invest1;
+                                lv1Comm += invest1 * 0.25; // 25%
 
-                                // Niveau 2
+                                const u1RefCode = user1.refCode || '';
+                                const u1Phone = user1.phone || '';
+
                                 for (let id2 in allUsers) {
                                     const user2 = allUsers[id2];
-                                    const refVal2 = getRefValue(user2);
-                                    const isLv2 = (refVal2 === id || refVal2 === subPhone || (subRefCode && refVal2 === subRefCode));
-
-                                    if (isLv2) {
+                                    if (isMyReferral(user2, id1, u1RefCode, u1Phone)) {
                                         lv2Count++;
-                                        let invest2 = parseFloat(user2.totalInvested || 0);
+                                        let invest2 = 0;
+                                        if (user2.myProducts) {
+                                            for (let pId2 in user2.myProducts) {
+                                                let p2 = user2.myProducts[pId2];
+                                                invest2 += parseFloat(p2.price || p2.amount || p2.cost || 0);
+                                            }
+                                        }
+                                        invest2 += parseFloat(user2.totalInvested || user2.investedAmount || 0);
+
                                         totalInvest += invest2;
                                         lv2Comm += invest2 * 0.03; // 3%
 
-                                        const subRefCode2 = user2.refCode;
-                                        const subPhone2 = user2.phone;
+                                        const u2RefCode = user2.refCode || '';
+                                        const u2Phone = user2.phone || '';
 
-                                        // Niveau 3
                                         for (let id3 in allUsers) {
                                             const user3 = allUsers[id3];
-                                            const refVal3 = getRefValue(user3);
-                                            const isLv3 = (refVal3 === id2 || refVal3 === subPhone2 || (subRefCode2 && refVal3 === subRefCode2));
-
-                                            if (isLv3) {
+                                            if (isMyReferral(user3, id2, u2RefCode, u2Phone)) {
                                                 lv3Count++;
-                                                let invest3 = parseFloat(user3.totalInvested || 0);
+                                                let invest3 = 0;
+                                                if (user3.myProducts) {
+                                                    for (let pId3 in user3.myProducts) {
+                                                        let p3 = user3.myProducts[pId3];
+                                                        invest3 += parseFloat(p3.price || p3.amount || p3.cost || 0);
+                                                    }
+                                                }
+                                                invest3 += parseFloat(user3.totalInvested || user3.investedAmount || 0);
+
                                                 totalInvest += invest3;
                                                 lv3Comm += invest3 * 0.01; // 1%
                                             }
@@ -366,6 +121,7 @@
                         }
                     }
 
+                    // Mise à jour de l'interface
                     document.getElementById('team-size').innerText = (lv1Count + lv2Count + lv3Count) + " membre(s)";
                     document.getElementById('total-team-invest').innerText = totalInvest.toLocaleString('fr-FR') + " FC";
                     
@@ -404,5 +160,3 @@
             alert("Lien d'invitation copié !");
         }
     </script>
-</body>
-</html>
